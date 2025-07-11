@@ -101,7 +101,7 @@ export function MultiSelectCombobox({
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command>
+        <Command onKeyDown={handleKeyDown}>
             <CommandInput
                 placeholder={inputPlaceholder}
                 value={inputValue}
