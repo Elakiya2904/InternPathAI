@@ -15,9 +15,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const userInputSchema = z.object({
-  fieldOfInterest: z.string().min(3, 'Field of interest is required'),
+  fieldOfInterest: z.string({
+    required_error: "Please select a field of interest."
+  }).min(1, 'Field of interest is required'),
   technologiesKnown: z.string().min(2, 'Please list at least one technology'),
 });
 
@@ -163,14 +166,18 @@ export default function Home() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base">What's your field of interest?</FormLabel>
-                          <FormControl>
-                            <Input className="py-6 text-base" placeholder="e.g., AI/ML, Frontend Development, Product Management" {...field} />
-                          </FormControl>
-                          <div className="flex flex-wrap gap-2 pt-2">
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="py-6 text-base">
+                                <SelectValue placeholder="Select a field of interest" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
                               {recommendedFields.map(recField => (
-                                <Badge key={recField} variant="outline" className="cursor-pointer hover:bg-secondary" onClick={() => form.setValue('fieldOfInterest', recField, { shouldValidate: true })}>{recField}</Badge>
+                                <SelectItem key={recField} value={recField}>{recField}</SelectItem>
                               ))}
-                          </div>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
