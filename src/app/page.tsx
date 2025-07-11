@@ -48,23 +48,27 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
             {!isLast && <div className="mt-2 w-0.5 h-full min-h-24 bg-primary/20" />}
         </div>
         <div className="ml-4 -mt-2 w-full">
-             <Card className="bg-accent/80 border-2 border-foreground rounded-lg shadow-md mb-8">
+             <Card className="bg-card border-2 border-primary/20 rounded-lg shadow-md mb-8">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold text-accent-foreground flex items-center justify-between">
+                    <CardTitle className="text-xl font-bold text-primary flex items-center justify-between">
                         {step.title}
-                        <CheckCircle className="w-6 h-6 text-primary" />
                     </CardTitle>
-                    <CardDescription className="text-accent-foreground/80">{step.description}</CardDescription>
+                    <CardDescription className="text-muted-foreground">{step.description}</CardDescription>
                 </CardHeader>
-                <Accordion type="single" collapsible className="w-full bg-card rounded-b-lg">
-                    <AccordionItem value="item-1" className="border-t-2 border-foreground">
-                        <AccordionContent className="p-6">
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-t-2 border-primary/20">
+                       <AccordionTrigger className="px-6 py-3 group">
+                          <span className="text-sm font-medium text-muted-foreground group-hover:text-primary">View Details</span>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-2">
                             <div className="space-y-6">
-                                <div>
+                                <div className="relative pl-6">
+                                    <div className="absolute -left-0 top-3 h-[calc(100%-1.5rem)] w-0.5 bg-primary/20"></div>
+                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><ListTodo/> Tasks</h4>
                                     <ul className="space-y-3">
                                         {step.tasks.map((task, i) => (
-                                            <li key={i} className="flex items-start gap-3 p-3 bg-secondary/30 rounded-md">
+                                            <li key={i} className="flex items-start gap-3 p-3 bg-background/50 rounded-md">
                                                 <CheckCircle className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
                                                 <div>
                                                     <p className="font-semibold">{task.subTaskTitle}</p>
@@ -74,13 +78,16 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
                                         ))}
                                     </ul>
                                 </div>
-                                <div>
+                                <div className="relative pl-6">
+                                    <div className="absolute -left-0 top-3 h-[calc(100%-1.5rem)] w-0.5 bg-primary/20"></div>
+                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><BookOpen/> Resources</h4>
                                     <ul className="space-y-2 list-disc list-inside text-muted-foreground">
                                         {step.resources.map((resource, i) => <li key={i}>{resource}</li>)}
                                     </ul>
                                 </div>
-                                <div>
+                                <div className="relative pl-6">
+                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><Lightbulb/> Project Idea</h4>
                                     <p className="text-muted-foreground">{step.project}</p>
                                 </div>
@@ -371,3 +378,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
