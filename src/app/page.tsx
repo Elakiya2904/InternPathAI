@@ -13,13 +13,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Progress } from '@/components/ui/progress';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -45,7 +46,8 @@ const iconMap: { [key: string]: LucideIcon } = {
   Server,
   BrainCircuit,
   ListTodo,
-  Lightbulb
+  Lightbulb,
+  CheckCircle,
 };
 
 const knownTechnologies = [
@@ -60,18 +62,45 @@ const knownTechnologies = [
     { value: 'git', label: 'Git' },
 ];
 
-const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutput['roadmap'][0] }) => {
+type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: File | null; };
+
+const RoadmapDetailCard = ({ 
+  detail,
+  onComplete,
+  isLocked,
+  index,
+}: { 
+  detail: RoadmapStepWithCompletion,
+  onComplete: (index: number, file: File) => void,
+  isLocked: boolean,
+  index: number
+}) => {
   const Icon = iconMap[detail.icon] || BrainCircuit;
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCertificateFile(e.target.files[0]);
+    }
+  };
+  
+  const handleComplete = () => {
+    if (certificateFile) {
+        onComplete(index, certificateFile);
+    }
+  };
 
   return (
-    <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card">
-      <AccordionTrigger className="p-6 text-left hover:no-underline">
+    <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card" disabled={isLocked}>
+      <AccordionTrigger className="p-6 text-left hover:no-underline" disabled={isLocked}>
         <div className="w-full">
             <CardTitle className="text-2xl flex items-center gap-3">
-              <Icon className="w-8 h-8 text-primary" />
+              {isLocked ? <Lock className="w-8 h-8 text-muted-foreground" /> : <Icon className="w-8 h-8 text-primary" />}
               {detail.title}
+              {detail.isCompleted && <CheckCircle className="w-7 h-7 text-green-500" />}
             </CardTitle>
             <CardDescription className="text-base mt-2">{detail.description}</CardDescription>
+            <Progress value={detail.isCompleted ? 100 : 0} className="mt-4 h-2" />
         </div>
       </AccordionTrigger>
       <AccordionContent>
@@ -107,6 +136,25 @@ const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutp
             <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Lightbulb /> Project Idea</h4>
             <p className="text-muted-foreground p-4 bg-secondary/50 rounded-md border border-border">{detail.project}</p>
           </div>
+          <Separator />
+          {!detail.isCompleted && (
+             <div>
+                <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Upload /> Complete Step</h4>
+                <div className="p-4 bg-secondary/50 rounded-md border border-border space-y-4">
+                  <p className="text-muted-foreground">Upload your certificate of completion to mark this step as done.</p>
+                  <Input type="file" onChange={handleFileChange} className="max-w-xs" />
+                   <Button onClick={handleComplete} disabled={!certificateFile}>Mark as Complete</Button>
+                </div>
+             </div>
+          )}
+           {detail.isCompleted && detail.certificate && (
+            <div>
+              <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-green-500"><CheckCircle /> Step Completed</h4>
+               <div className="p-4 bg-green-500/10 rounded-md border border-green-500/30">
+                  <p className="font-semibold text-green-400">Certificate Uploaded: {detail.certificate.name}</p>
+               </div>
+            </div>
+           )}
         </CardContent>
       </AccordionContent>
     </AccordionItem>
@@ -117,7 +165,7 @@ export default function Home() {
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
   const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
-  const [roadmapData, setRoadmapData] = useState<GeneratePersonalizedRoadmapOutput | null>(null);
+  const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
@@ -189,7 +237,14 @@ export default function Home() {
         selectedSkills: selectedSkills,
         additionalSkills: additionalSkillsList,
       });
-      setRoadmapData(roadmapResult);
+
+      const roadmapWithCompletion = roadmapResult.roadmap.map(step => ({
+        ...step,
+        isCompleted: false,
+        certificate: null,
+      }));
+      setRoadmapData({ ...roadmapResult, roadmap: roadmapWithCompletion });
+      
       setStep('roadmap');
     } catch (error) {
       console.error(error);
@@ -221,6 +276,15 @@ export default function Home() {
     form.reset();
   }
 
+  const handleCompleteStep = (index: number, file: File) => {
+      if (roadmapData) {
+        const newRoadmap = [...roadmapData.roadmap];
+        newRoadmap[index].isCompleted = true;
+        newRoadmap[index].certificate = file;
+        setRoadmapData({ ...roadmapData, roadmap: newRoadmap });
+      }
+  };
+  
   const AppHeader = () => (
     <header className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-20">
       <div className="flex items-center gap-3">
@@ -339,7 +403,14 @@ export default function Home() {
                       <Button onClick={handleAddAdditionalSkill} variant="outline" size="lg"><PlusCircle className="w-5 h-5"/></Button>
                     </div>
                     <div className="flex flex-wrap gap-2 mt-4">
-                        {additionalSkillsList.map(skill => <Badge key={skill} variant="secondary" className="text-base py-1 px-3">{skill}</Badge>)}
+                        {additionalSkillsList.map(skill => (
+                          <Badge key={skill} variant="secondary" className="flex items-center text-base py-1 px-3">
+                              {skill}
+                              <button onClick={() => setAdditionalSkillsList(prev => prev.filter(s => s !== skill))} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                                <XIcon className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                              </button>
+                          </Badge>
+                        ))}
                     </div>
                 </div>
 
@@ -362,7 +433,13 @@ export default function Home() {
 
                 <Accordion type="single" collapsible className="w-full space-y-4">
                   {roadmapData.roadmap.map((detail, index) => (
-                    <RoadmapDetailCard key={index} detail={detail} />
+                    <RoadmapDetailCard
+                        key={index}
+                        detail={detail}
+                        onComplete={handleCompleteStep}
+                        isLocked={index > 0 && !roadmapData.roadmap[index - 1].isCompleted}
+                        index={index}
+                    />
                   ))}
                 </Accordion>
 
@@ -398,3 +475,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
