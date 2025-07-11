@@ -101,32 +101,32 @@ export function MultiSelectCombobox({
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <Command onKeyDown={handleKeyDown} className="bg-transparent">
+        <Command>
             <CommandInput
                 placeholder={inputPlaceholder}
                 value={inputValue}
                 onValueChange={setInputValue}
-                onFocus={() => setOpen(true)}
-                className="h-full bg-transparent border-none focus:ring-0 p-0 text-base"
             />
             <CommandList>
                 <CommandEmpty>No option found. Press Enter to add.</CommandEmpty>
                 <CommandGroup>
-                {filteredOptions.map((option) => (
-                    <CommandItem
-                    key={option.value}
-                    value={option.value}
-                    onSelect={handleSelect}
-                    >
-                    <Check
-                        className={cn(
-                        "mr-2 h-4 w-4",
-                        selected.includes(option.value) ? "opacity-100" : "opacity-0"
-                        )}
-                    />
-                    {option.label}
-                    </CommandItem>
-                ))}
+                  <div className="grid grid-cols-3 gap-1">
+                    {filteredOptions.map((option) => (
+                      <CommandItem
+                      key={option.value}
+                      value={option.value}
+                      onSelect={handleSelect}
+                      >
+                      <Check
+                          className={cn(
+                          "mr-2 h-4 w-4",
+                          selected.includes(option.value) ? "opacity-100" : "opacity-0"
+                          )}
+                      />
+                      {option.label}
+                      </CommandItem>
+                    ))}
+                  </div>
                 </CommandGroup>
             </CommandList>
         </Command>
