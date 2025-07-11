@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, icons, LucideIcon, ListTodo, BookOpen, Lightbulb } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -36,8 +36,19 @@ const internships = [
     { title: 'Product Manager Intern', company: 'Stripe', link: 'https://stripe.com/jobs/search?role=intern', dataAiHint: "product manager" },
 ];
 
+const iconMap: { [key: string]: LucideIcon } = {
+  Code,
+  BookOpen,
+  Milestone,
+  Database,
+  Server,
+  BrainCircuit,
+  ListTodo,
+  Lightbulb
+};
+
 const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutput['roadmap'][0] }) => {
-  const Icon = icons[detail.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
+  const Icon = iconMap[detail.icon] || BrainCircuit;
 
   return (
     <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card">
