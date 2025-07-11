@@ -42,6 +42,8 @@ export default function Home() {
   
   const { toast } = useToast();
 
+  const recommendedFields = ['AI/ML', 'Frontend Development', 'Full Stack Development', 'Product Management', 'Data Science', 'UI/UX Design'];
+
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
     defaultValues: {
@@ -164,6 +166,11 @@ export default function Home() {
                           <FormControl>
                             <Input className="py-6 text-base" placeholder="e.g., AI/ML, Frontend Development, Product Management" {...field} />
                           </FormControl>
+                          <div className="flex flex-wrap gap-2 pt-2">
+                              {recommendedFields.map(recField => (
+                                <Badge key={recField} variant="outline" className="cursor-pointer hover:bg-secondary" onClick={() => form.setValue('fieldOfInterest', recField, { shouldValidate: true })}>{recField}</Badge>
+                              ))}
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
