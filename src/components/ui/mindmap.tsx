@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -12,13 +13,11 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CheckCircle, ListTodo, BookOpen, Lightbulb, BrainCircuit, type LucideIcon, icons } from 'lucide-react';
-import { Badge } from './badge';
 
 
 type MindMapNodeProps = {
-  node: GenerateMindMapOutput['nodes'][0];
+  node: GenerateMindMapOutput['nodes'][0] & { children: any[] };
   level: number;
   roadmapDetails: GeneratePersonalizedRoadmapOutput['roadmap'];
 };
@@ -76,7 +75,6 @@ const NodeDetailsDialog = ({ node, roadmapDetails }: { node: GenerateMindMapOutp
 
 
 const MindMapNode = ({ node, level, roadmapDetails }: MindMapNodeProps) => {
-  const [isOpen, setIsOpen] = React.useState(true);
   const hasChildren = node.children && node.children.length > 0;
   const isRoot = level === 0;
 
@@ -85,10 +83,11 @@ const MindMapNode = ({ node, level, roadmapDetails }: MindMapNodeProps) => {
   const NodeContent = () => (
     <div
       className={cn(
-        'relative p-3 rounded-lg border-2 w-max min-w-[120px] text-center transition-all duration-300 cursor-pointer',
+        'relative p-3 rounded-lg border-2 w-max min-w-[120px] text-center transition-all duration-300',
         isRoot 
           ? 'bg-primary text-primary-foreground border-primary text-lg font-bold' 
-          : 'bg-card text-card-foreground border-border hover:border-primary hover:shadow-lg',
+          : 'bg-card text-card-foreground border-border',
+        detail ? 'cursor-pointer hover:border-primary hover:shadow-lg' : 'cursor-default',
         'shadow-md'
       )}
     >
@@ -107,9 +106,9 @@ const MindMapNode = ({ node, level, roadmapDetails }: MindMapNodeProps) => {
         <NodeContent />
       )}
 
-      {hasChildren && isOpen && (
+      {hasChildren && (
         <div className="pl-8 flex flex-col justify-center">
-          {node.children.map((child, index) => (
+          {node.children.map((child: any, index: number) => (
             <div key={child.id} className="relative flex items-center my-2">
               <div className="absolute -left-8 h-full w-4 flex items-center justify-end">
                 <div className="h-0.5 w-4 bg-primary/50"></div>
@@ -143,7 +142,7 @@ export const MindMap = ({ data, roadmapDetails }: MindMapProps) => {
     return <div>Error: Could not find the root node of the mind map.</div>;
   }
 
-  const buildHierarchy = (nodeId: string): GenerateMindMapOutput['nodes'][0] => {
+  const buildHierarchy = (nodeId: string): GenerateMindMapOutput['nodes'][0] & { children: any[] } => {
     const node = data.nodes.find(n => n.id === nodeId)!;
     const childrenIds = data.edges.filter(e => e.source === nodeId).map(e => e.target);
     const children = childrenIds.map(childId => buildHierarchy(childId));
