@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy, CheckCircle2, BookOpen, Lightbulb, ListTodo, ArrowDown } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, CheckCircle, ListTodo, BookOpen, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -37,34 +37,35 @@ const internships = [
 ];
 
 const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput['roadmap'][0], isLast: boolean }) => {
-  const Icon = icons[step.icon as keyof typeof icons] as LucideIcon || Cloudy;
+  const Icon = icons[step.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
 
   return (
     <div className="relative flex items-start">
         <div className="flex-shrink-0 w-24 flex flex-col items-center">
-            <div className="bg-primary/10 text-primary rounded-full w-16 h-16 flex items-center justify-center shadow-lg border-2 border-primary/20">
-                <Icon className="w-8 h-8" />
+            <div className="bg-primary/10 text-primary rounded-full w-12 h-12 flex items-center justify-center border-2 border-primary/20">
+                <Icon className="w-6 h-6" />
             </div>
             {!isLast && <div className="mt-2 w-0.5 h-full min-h-24 bg-primary/20" />}
         </div>
         <div className="ml-4 -mt-2 w-full">
-            <div className="relative p-0 rounded-2xl bg-card border border-border shadow-lg">
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border-none">
-                        <AccordionTrigger className="p-6 hover:no-underline">
-                            <div className="text-left">
-                                <h3 className="font-headline text-xl font-bold text-primary">{step.title}</h3>
-                                <p className="mt-2 text-muted-foreground">{step.description}</p>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-0">
+             <Card className="bg-accent/80 border-2 border-foreground rounded-lg shadow-md mb-8">
+                <CardHeader>
+                    <CardTitle className="text-xl font-bold text-accent-foreground flex items-center justify-between">
+                        {step.title}
+                        <CheckCircle className="w-6 h-6 text-primary" />
+                    </CardTitle>
+                    <CardDescription className="text-accent-foreground/80">{step.description}</CardDescription>
+                </CardHeader>
+                <Accordion type="single" collapsible className="w-full bg-card rounded-b-lg">
+                    <AccordionItem value="item-1" className="border-t-2 border-foreground">
+                        <AccordionContent className="p-6">
                             <div className="space-y-6">
                                 <div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><ListTodo/> Tasks</h4>
                                     <ul className="space-y-3">
                                         {step.tasks.map((task, i) => (
-                                            <li key={i} className="flex items-start gap-3">
-                                                <CheckCircle2 className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
+                                            <li key={i} className="flex items-start gap-3 p-3 bg-secondary/30 rounded-md">
+                                                <CheckCircle className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
                                                 <div>
                                                     <p className="font-semibold">{task.subTaskTitle}</p>
                                                     <p className="text-muted-foreground text-sm">{task.description}</p>
@@ -87,7 +88,7 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
-            </div>
+             </Card>
         </div>
     </div>
   );
@@ -200,7 +201,7 @@ export default function Home() {
   }
 
   const AppHeader = () => (
-    <header className="flex items-center justify-between p-4 border-b border-border/20 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+    <header className="flex items-center justify-between p-4 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-20">
       <div className="flex items-center gap-3">
         <BrainCircuit className="w-8 h-8 text-primary" />
         <h1 className="text-2xl font-bold font-headline text-foreground">InternPathAI</h1>
@@ -217,7 +218,7 @@ export default function Home() {
       <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-4xl animate-in fade-in-50 duration-500">
           {step === 'input' && (
-            <Card className="shadow-2xl shadow-primary/10 border-none">
+            <Card className="shadow-2xl shadow-primary/10 border-2">
               <CardHeader className="text-center">
                 <div className="mx-auto bg-primary/10 rounded-full p-3 w-fit mb-4">
                   <Sparkles className="w-10 h-10 text-primary" />
@@ -258,7 +259,7 @@ export default function Home() {
                         </FormItem>
                       )}
                     />
-                     <Button type="submit" disabled={loading} size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-lg py-7">
+                     <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                         {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
                         {!loading && <ArrowRight className="ml-2" />}
                       </Button>
@@ -269,7 +270,7 @@ export default function Home() {
           )}
 
           {step === 'checklist' && skillsData && (
-            <Card className="shadow-2xl shadow-primary/10 border-none">
+            <Card className="shadow-2xl shadow-primary/10 border-2">
               <CardHeader>
                 <CardTitle className="font-headline text-3xl">Customize Your Skillset</CardTitle>
                 <CardDescription className="text-lg text-muted-foreground">Select the skills you want to focus on. We've suggested some based on your interests.</CardDescription>
@@ -279,7 +280,7 @@ export default function Home() {
                   <h3 className="font-bold text-lg mb-4 text-primary">Suggested Skills</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {skillsData.skillsChecklist.map((skill) => (
-                      <div key={skill} className="flex items-center space-x-3 p-3 bg-secondary/50 rounded-lg transition-all has-[:checked]:bg-primary/10 has-[:checked]:ring-2 has-[:checked]:ring-primary">
+                      <div key={skill} className="flex items-center space-x-3 p-3 bg-card border-2 border-foreground/30 rounded-lg transition-all has-[:checked]:bg-primary/10 has-[:checked]:ring-2 has-[:checked]:ring-primary">
                         <Checkbox
                           id={skill}
                           checked={selectedSkills.includes(skill)}
@@ -316,7 +317,7 @@ export default function Home() {
 
               </CardContent>
               <CardFooter>
-                 <Button onClick={handleGenerateRoadmap} disabled={loading} size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold text-lg py-7">
+                 <Button onClick={handleGenerateRoadmap} disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                     {loading ? <Loader2 className="animate-spin" /> : "Create My Personalized Roadmap"}
                      {!loading && <Wand2 className="ml-2" />}
                   </Button>
@@ -325,40 +326,38 @@ export default function Home() {
           )}
 
           {step === 'roadmap' && roadmapData && (
-             <div className="space-y-8">
-               <Card className="shadow-2xl shadow-primary/10 border-none bg-transparent">
-                    <CardHeader>
-                      <CardTitle className="font-headline text-3xl flex items-center gap-3"><Wand2 className="text-accent" /> Your Personalized Roadmap</CardTitle>
-                      <CardDescription className="text-lg text-muted-foreground">Here's a step-by-step guide to help you prepare for your dream internship.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-0">
-                        {roadmapData.roadmap.map((step, index) => (
-                           <RoadmapStep key={index} step={step} isLast={index === roadmapData.roadmap.length - 1} />
-                        ))}
-                      </div>
-                    </CardContent>
-                </Card>
+             <div className="space-y-4">
+               <div>
+                  <div className="text-center mb-8">
+                    <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Personalized Roadmap</h2>
+                    <p className="text-lg text-muted-foreground mt-2">Here's a step-by-step guide to help you prepare for your dream internship.</p>
+                  </div>
+                  <div className="space-y-0">
+                    {roadmapData.roadmap.map((step, index) => (
+                       <RoadmapStep key={index} step={step} isLast={index === roadmapData.roadmap.length - 1} />
+                    ))}
+                  </div>
+                </div>
 
-              <Card className="shadow-2xl shadow-primary/10 border-none">
+              <Card className="shadow-2xl shadow-primary/10 border-2">
                   <CardHeader>
-                      <CardTitle className="font-headline text-3xl flex items-center gap-3"><Sparkles className="text-accent" /> AI-Powered Advice</CardTitle>
+                      <CardTitle className="font-headline text-3xl flex items-center gap-3"><Sparkles className="text-primary" /> AI-Powered Advice</CardTitle>
                   </CardHeader>
                   <CardContent className="prose dark:prose-invert max-w-none prose-p:text-lg prose-headings:text-primary prose-strong:text-foreground">
                       <ReactMarkdown>{roadmapData.advice}</ReactMarkdown>
                   </CardContent>
               </Card>
 
-              <Card className="shadow-2xl shadow-primary/10 border-none">
+              <Card className="shadow-2xl shadow-primary/10 border-2">
                   <CardHeader>
-                      <CardTitle className="font-headline text-3xl flex items-center gap-3"><Briefcase className="text-accent" /> Internship Recommendations</CardTitle>
+                      <CardTitle className="font-headline text-3xl flex items-center gap-3"><Briefcase className="text-primary" /> Internship Recommendations</CardTitle>
                       <CardDescription className="text-lg text-muted-foreground">Check out these opportunities that align with your skills.</CardDescription>
                   </CardHeader>
                   <CardContent>
                       <div className="grid md:grid-cols-2 gap-4">
                           {internships.map(internship => (
-                            <a key={internship.title} href={internship.link} target="_blank" rel="noopener noreferrer" className="block p-4 border border-border bg-card hover:bg-secondary/50 rounded-lg transition-colors group">
-                              <h4 className="font-bold text-lg text-primary group-hover:text-accent transition-colors">{internship.title}</h4>
+                            <a key={internship.title} href={internship.link} target="_blank" rel="noopener noreferrer" className="block p-4 border-2 bg-card hover:bg-secondary/50 rounded-lg transition-colors group">
+                              <h4 className="font-bold text-lg text-primary group-hover:text-accent-foreground transition-colors">{internship.title}</h4>
                               <p className="text-muted-foreground">{internship.company}</p>
                             </a>
                           ))}
