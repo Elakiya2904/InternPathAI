@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -15,11 +16,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
-    required_error: "Please select a field of interest."
+    required_error: "Please select or enter a field of interest."
   }).min(1, 'Field of interest is required'),
   technologiesKnown: z.string().min(2, 'Please list at least one technology'),
 });
@@ -45,7 +46,14 @@ export default function Home() {
   
   const { toast } = useToast();
 
-  const recommendedFields = ['AI/ML', 'Frontend Development', 'Full Stack Development', 'Product Management', 'Data Science', 'UI/UX Design'];
+  const recommendedFields = [
+      { value: 'AI/ML', label: 'AI/ML' },
+      { value: 'Frontend Development', label: 'Frontend Development' },
+      { value: 'Full Stack Development', label: 'Full Stack Development' },
+      { value: 'Product Management', label: 'Product Management' },
+      { value: 'Data Science', label: 'Data Science' },
+      { value: 'UI/UX Design', label: 'UI/UX Design' },
+  ];
 
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
@@ -164,20 +172,15 @@ export default function Home() {
                       control={form.control}
                       name="fieldOfInterest"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex flex-col">
                           <FormLabel className="text-base">What's your field of interest?</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="py-6 text-base">
-                                <SelectValue placeholder="Select a field of interest" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {recommendedFields.map(recField => (
-                                <SelectItem key={recField} value={recField}>{recField}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                           <Combobox
+                              options={recommendedFields}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select or type a field..."
+                              inputPlaceholder="Search or add a new field..."
+                            />
                           <FormMessage />
                         </FormItem>
                       )}
