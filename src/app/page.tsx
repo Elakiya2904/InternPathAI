@@ -17,6 +17,7 @@ import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkl
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
+import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -48,15 +49,15 @@ const iconMap: { [key: string]: LucideIcon } = {
 };
 
 const knownTechnologies = [
-    { id: 'react', label: 'React' },
-    { id: 'javascript', label: 'JavaScript' },
-    { id: 'python', label: 'Python' },
-    { id: 'typescript', label: 'TypeScript' },
-    { id: 'html', label: 'HTML' },
-    { id: 'css', label: 'CSS' },
-    { id: 'nodejs', label: 'Node.js' },
-    { id: 'sql', label: 'SQL' },
-    { id: 'git', label: 'Git' },
+    { value: 'react', label: 'React' },
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'python', label: 'Python' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'html', label: 'HTML' },
+    { value: 'css', label: 'CSS' },
+    { value: 'nodejs', label: 'Node.js' },
+    { value: 'sql', label: 'SQL' },
+    { value: 'git', label: 'Git' },
 ];
 
 const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutput['roadmap'][0] }) => {
@@ -269,47 +270,19 @@ export default function Home() {
                     <FormField
                       control={form.control}
                       name="technologiesKnown"
-                      render={() => (
+                      render={({ field }) => (
                         <FormItem>
                           <div className="mb-4">
                             <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
                             <FormDescription>Select all that apply.</FormDescription>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                          {knownTechnologies.map((item) => (
-                            <FormField
-                              key={item.id}
-                              control={form.control}
-                              name="technologiesKnown"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem
-                                    key={item.id}
-                                    className="flex flex-row items-center space-x-3 space-y-0 p-3 bg-card border-2 border-foreground/30 rounded-lg transition-all has-[:checked]:bg-primary/10 has-[:checked]:ring-2 has-[:checked]:ring-primary"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(item.id)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, item.id])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== item.id
-                                                )
-                                              )
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal cursor-pointer flex-1">
-                                      {item.label}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                          </div>
+                          <MultiSelectCombobox
+                            options={knownTechnologies}
+                            selected={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select or type technologies..."
+                            inputPlaceholder="Search or add a new technology..."
+                          />
                           <FormMessage />
                         </FormItem>
                       )}
