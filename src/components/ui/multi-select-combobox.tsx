@@ -76,59 +76,61 @@ export function MultiSelectCombobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <div className={cn("w-full", className)}>
-            <div className="flex flex-wrap gap-2 p-2 border border-input rounded-md min-h-11 items-center bg-background">
-                {selected.map((value) => (
-                  <Badge key={value} variant="secondary" className="pl-3 pr-1 text-base">
-                    {getLabel(value)}
-                    <button
-                        onClick={() => handleRemove(value)}
-                        className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    >
-                        <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    </button>
-                  </Badge>
-                ))}
-                 <PopoverTrigger asChild>
-                    <div className="flex-1">
-                        <Command onKeyDown={handleKeyDown} className="bg-transparent">
-                            <CommandInput
-                                placeholder={selected.length > 0 ? "" : placeholder}
-                                value={inputValue}
-                                onValueChange={setInputValue}
-                                onFocus={() => setOpen(true)}
-                                className="h-full bg-transparent border-none focus:ring-0 p-0 text-base"
-                            />
-                        </Command>
-                    </div>
-                </PopoverTrigger>
+            <div className="flex flex-wrap gap-2 p-2 border border-input rounded-md min-h-11 items-center bg-background cursor-pointer">
+                <div className="flex flex-wrap gap-2 flex-grow">
+                  {selected.map((value) => (
+                    <Badge key={value} variant="secondary" className="pl-3 pr-1 text-base">
+                      {getLabel(value)}
+                      <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemove(value)
+                          }}
+                          className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    </Badge>
+                  ))}
+                  {selected.length === 0 && <span className="text-muted-foreground text-sm ml-1">{placeholder}</span>}
+                </div>
                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50 text-muted-foreground" />
             </div>
         </div>
+      </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-        <CommandList>
-            <CommandEmpty>No option found. Press Enter to add.</CommandEmpty>
-            <CommandGroup>
-              {filteredOptions.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  value={option.value}
-                  onSelect={handleSelect}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selected.includes(option.value) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-        </CommandList>
+        <Command onKeyDown={handleKeyDown} className="bg-transparent">
+            <CommandInput
+                placeholder={inputPlaceholder}
+                value={inputValue}
+                onValueChange={setInputValue}
+                onFocus={() => setOpen(true)}
+                className="h-full bg-transparent border-none focus:ring-0 p-0 text-base"
+            />
+            <CommandList>
+                <CommandEmpty>No option found. Press Enter to add.</CommandEmpty>
+                <CommandGroup>
+                {filteredOptions.map((option) => (
+                    <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={handleSelect}
+                    >
+                    <Check
+                        className={cn(
+                        "mr-2 h-4 w-4",
+                        selected.includes(option.value) ? "opacity-100" : "opacity-0"
+                        )}
+                    />
+                    {option.label}
+                    </CommandItem>
+                ))}
+                </CommandGroup>
+            </CommandList>
+        </Command>
       </PopoverContent>
     </Popover>
   );
 }
-
-    
