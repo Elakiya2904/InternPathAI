@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -24,7 +24,7 @@ const userInputSchema = z.object({
   fieldOfInterest: z.string({
     required_error: "Please select or enter a field of interest."
   }).min(1, 'Field of interest is required'),
-  technologiesKnown: z.string().min(2, 'Please list at least one technology'),
+  technologiesKnown: z.array(z.string()).min(1, 'Please list at least one technology'),
 });
 
 type UserInput = z.infer<typeof userInputSchema>;
@@ -109,6 +109,8 @@ export default function Home() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
   const [additionalSkillsList, setAdditionalSkillsList] = useState<string[]>([]);
+  const [currentTech, setCurrentTech] = useState('');
+  const [knownTechs, setKnownTechs] = useState<string[]>([]);
   
   const { toast } = useToast();
 
@@ -125,7 +127,7 @@ export default function Home() {
     resolver: zodResolver(userInputSchema),
     defaultValues: {
       fieldOfInterest: '',
-      technologiesKnown: '',
+      technologiesKnown: [],
     },
   });
 
@@ -133,7 +135,10 @@ export default function Home() {
     setLoading(true);
     setUserInput(data);
     try {
-      const result = await generateSkillsChecklist(data);
+      const result = await generateSkillsChecklist({
+          ...data,
+          technologiesKnown: data.technologiesKnown.join(', ')
+      });
       setSkillsData(result);
       setSelectedSkills(result.skillsChecklist);
       setStep('checklist');
@@ -154,6 +159,22 @@ export default function Home() {
       setAdditionalSkillsList([...additionalSkillsList, additionalSkill.trim()]);
       setAdditionalSkill('');
     }
+  };
+
+  const handleAddKnownTech = () => {
+    const newTech = currentTech.trim();
+    if (newTech && !knownTechs.includes(newTech)) {
+        const updatedTechs = [...knownTechs, newTech];
+        setKnownTechs(updatedTechs);
+        form.setValue('technologiesKnown', updatedTechs);
+        setCurrentTech('');
+    }
+  };
+
+  const handleRemoveKnownTech = (techToRemove: string) => {
+    const updatedTechs = knownTechs.filter(tech => tech !== techToRemove);
+    setKnownTechs(updatedTechs);
+    form.setValue('technologiesKnown', updatedTechs);
   };
 
   const handleGenerateRoadmap = async () => {
@@ -202,6 +223,8 @@ export default function Home() {
     setSelectedSkills([]);
     setAdditionalSkill('');
     setAdditionalSkillsList([]);
+    setKnownTechs([]);
+    setCurrentTech('');
     form.reset();
   }
 
@@ -252,17 +275,34 @@ export default function Home() {
                       )}
                     />
                     <FormField
-                      control={form.control}
-                      name="technologiesKnown"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-base">What technologies do you know?</FormLabel>
-                          <FormControl>
-                            <Input className="py-6 text-base" placeholder="e.g., React, Python, TensorFlow" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                        control={form.control}
+                        name="technologiesKnown"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-base">What technologies do you know?</FormLabel>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={currentTech}
+                                        onChange={(e) => setCurrentTech(e.target.value)}
+                                        placeholder="e.g., React, Python..."
+                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddKnownTech(); } }}
+                                        className="py-6 text-base"
+                                    />
+                                    <Button type="button" onClick={handleAddKnownTech} variant="outline" size="lg">Add</Button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {knownTechs.map((tech) => (
+                                        <Badge key={tech} variant="secondary" className="text-base py-1 px-3 flex items-center gap-2">
+                                            {tech}
+                                            <button type="button" onClick={() => handleRemoveKnownTech(tech)} className="rounded-full hover:bg-muted-foreground/20 p-0.5">
+                                                <XIcon className="w-3 h-3" />
+                                            </button>
+                                        </Badge>
+                                    ))}
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
                      <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                         {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
@@ -375,3 +415,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

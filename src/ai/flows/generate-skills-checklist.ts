@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -17,7 +18,7 @@ const GenerateSkillsChecklistInputSchema = z.object({
     .describe('The user\'s field of interest for internships.'),
   technologiesKnown: z
     .string()
-    .describe('The technologies that the user already knows.'),
+    .describe('A comma-separated string of technologies that the user already knows.'),
 });
 export type GenerateSkillsChecklistInput = z.infer<
   typeof GenerateSkillsChecklistInputSchema
@@ -59,3 +60,5 @@ const generateSkillsChecklistFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
