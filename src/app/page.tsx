@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
+import { generateMindMap, type GenerateMindMapOutput } from '@/ai/flows/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -19,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { MindMap } from '@/components/ui/mindmap';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -36,87 +38,12 @@ const internships = [
     { title: 'Product Manager Intern', company: 'Stripe', link: 'https://stripe.com/jobs/search?role=intern', dataAiHint: "product manager" },
 ];
 
-const RoadmapStep = ({ step, index }: { step: GeneratePersonalizedRoadmapOutput['roadmap'][0], index: number }) => {
-  const Icon = icons[step.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
-  const isLeft = index % 2 === 0;
-
-  return (
-    <div className="relative flex items-start justify-center">
-      {/* Spacer for the side opposite the card */}
-      <div className={cn("w-1/2", isLeft ? "order-1" : "order-3")} />
-      
-      {/* Central timeline and icon */}
-      <div className={cn("relative order-2 flex w-16 flex-shrink-0 flex-col items-center", isLeft ? "mr-[-1px]" : "ml-[-1px]")}>
-        <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border-4 border-background">
-          <Icon className="h-6 w-6" />
-        </div>
-        <div className="h-full min-h-24 w-0.5 bg-primary/20" />
-      </div>
-
-      {/* Card and Branch */}
-      <div className={cn("w-1/2 pb-8", isLeft ? "order-3" : "order-1")}>
-        <div className={cn("relative", isLeft ? 'pl-8' : 'pr-8')}>
-            {/* Branch and Arrow */}
-            <div className={cn("absolute top-5 h-0.5 w-8 bg-primary/20", isLeft ? 'left-0' : 'right-0')} />
-            <div className={cn("absolute top-[1.10rem] h-0 w-0 border-t-[6px] border-b-[6px] border-transparent",
-                isLeft ? 'left-8 border-l-[6px] border-l-primary/30' : 'right-8 border-r-[6px] border-r-primary/30'
-            )} />
-
-             <Card className="bg-card border-2 border-primary/20 rounded-lg shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-xl font-bold text-primary flex items-center justify-between">
-                        {step.title}
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground">{step.description}</CardDescription>
-                </CardHeader>
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border-t-2 border-primary/20">
-                       <AccordionTrigger className="px-6 py-3 group">
-                          <span className="text-sm font-medium text-muted-foreground group-hover:text-primary">View Details</span>
-                        </AccordionTrigger>
-                        <AccordionContent className="p-6 pt-2">
-                            <div className="space-y-6">
-                                <div>
-                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><ListTodo/> Tasks</h4>
-                                    <ul className="space-y-3">
-                                        {step.tasks.map((task, i) => (
-                                            <li key={i} className="flex items-start gap-3 p-3 bg-background/50 rounded-md">
-                                                <CheckCircle className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
-                                                <div>
-                                                    <p className="font-semibold">{task.subTaskTitle}</p>
-                                                    <p className="text-muted-foreground text-sm">{task.description}</p>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><BookOpen/> Resources</h4>
-                                    <ul className="space-y-2 list-disc list-inside text-muted-foreground">
-                                        {step.resources.map((resource, i) => <li key={i}>{resource}</li>)}
-                                    </ul>
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><Lightbulb/> Project Idea</h4>
-                                    <p className="text-muted-foreground">{step.project}</p>
-                                </div>
-                            </div>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-             </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
 export default function Home() {
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
   const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
   const [roadmapData, setRoadmapData] = useState<GeneratePersonalizedRoadmapOutput | null>(null);
+  const [mindMapData, setMindMapData] = useState<GenerateMindMapOutput | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
@@ -180,12 +107,19 @@ export default function Home() {
     setLoading(true);
     try {
       if (!userInput) throw new Error('User input is missing');
-      const result = await generatePersonalizedRoadmap({
+      const roadmapResult = await generatePersonalizedRoadmap({
         fieldOfInterest: userInput.fieldOfInterest,
         selectedSkills: selectedSkills,
         additionalSkills: additionalSkillsList,
       });
-      setRoadmapData(result);
+      setRoadmapData(roadmapResult);
+
+      const mindMapResult = await generateMindMap({
+        fieldOfInterest: userInput.fieldOfInterest,
+        skills: selectedSkills.concat(additionalSkillsList),
+      });
+      setMindMapData(mindMapResult);
+
       setStep('roadmap');
     } catch (error) {
       console.error(error);
@@ -210,6 +144,7 @@ export default function Home() {
     setLoading(false);
     setSkillsData(null);
     setRoadmapData(null);
+    setMindMapData(null);
     setUserInput(null);
     setSelectedSkills([]);
     setAdditionalSkill('');
@@ -232,8 +167,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader />
-      <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-4xl animate-in fade-in-50 duration-500">
+      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-8">
+        <div className="w-full max-w-4xl xl:max-w-7xl animate-in fade-in-50 duration-500">
           {step === 'input' && (
             <Card className="shadow-2xl shadow-primary/10 border-2">
               <CardHeader className="text-center">
@@ -342,20 +277,18 @@ export default function Home() {
             </Card>
           )}
 
-          {step === 'roadmap' && roadmapData && (
-             <div className="space-y-4">
+          {step === 'roadmap' && mindMapData && roadmapData && (
+             <div className="space-y-8 w-full">
                <div>
                   <div className="text-center mb-8">
                     <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Personalized Roadmap</h2>
-                    <p className="text-lg text-muted-foreground mt-2">Here's a step-by-step guide to help you prepare for your dream internship.</p>
+                    <p className="text-lg text-muted-foreground mt-2">Here's a mind map of skills to prepare for your dream internship. Click on a skill for details.</p>
                   </div>
-                  <div className="relative">
-                      {/* Central Line - positioned absolutely */}
-                     <div className="absolute left-1/2 top-0 h-full w-0.5 bg-primary/20 transform -translate-x-1/2" />
-                      {roadmapData.roadmap.map((step, index) => (
-                         <RoadmapStep key={index} step={step} index={index} />
-                      ))}
-                  </div>
+                  <Card className="shadow-2xl shadow-primary/10 border-2 w-full">
+                    <CardContent className="p-4 sm:p-6">
+                        <MindMap data={mindMapData} roadmapDetails={roadmapData.roadmap} />
+                    </CardContent>
+                  </Card>
                 </div>
 
               <Card className="shadow-2xl shadow-primary/10 border-2">
