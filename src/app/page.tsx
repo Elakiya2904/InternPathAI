@@ -24,7 +24,7 @@ const userInputSchema = z.object({
   fieldOfInterest: z.string({
     required_error: "Please select or enter a field of interest."
   }).min(1, 'Field of interest is required'),
-  technologiesKnown: z.array(z.string()).min(1, 'Please list at least one technology'),
+  technologiesKnown: z.array(z.string()).min(1, 'Please select at least one technology.'),
 });
 
 type UserInput = z.infer<typeof userInputSchema>;
@@ -46,6 +46,18 @@ const iconMap: { [key: string]: LucideIcon } = {
   ListTodo,
   Lightbulb
 };
+
+const knownTechnologies = [
+    { id: 'react', label: 'React' },
+    { id: 'javascript', label: 'JavaScript' },
+    { id: 'python', label: 'Python' },
+    { id: 'typescript', label: 'TypeScript' },
+    { id: 'html', label: 'HTML' },
+    { id: 'css', label: 'CSS' },
+    { id: 'nodejs', label: 'Node.js' },
+    { id: 'sql', label: 'SQL' },
+    { id: 'git', label: 'Git' },
+];
 
 const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutput['roadmap'][0] }) => {
   const Icon = iconMap[detail.icon] || BrainCircuit;
@@ -109,8 +121,6 @@ export default function Home() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
   const [additionalSkillsList, setAdditionalSkillsList] = useState<string[]>([]);
-  const [currentTech, setCurrentTech] = useState('');
-  const [knownTechs, setKnownTechs] = useState<string[]>([]);
   
   const { toast } = useToast();
 
@@ -161,22 +171,6 @@ export default function Home() {
     }
   };
 
-  const handleAddKnownTech = () => {
-    const newTech = currentTech.trim();
-    if (newTech && !knownTechs.includes(newTech)) {
-        const updatedTechs = [...knownTechs, newTech];
-        setKnownTechs(updatedTechs);
-        form.setValue('technologiesKnown', updatedTechs);
-        setCurrentTech('');
-    }
-  };
-
-  const handleRemoveKnownTech = (techToRemove: string) => {
-    const updatedTechs = knownTechs.filter(tech => tech !== techToRemove);
-    setKnownTechs(updatedTechs);
-    form.setValue('technologiesKnown', updatedTechs);
-  };
-
   const handleGenerateRoadmap = async () => {
     if (selectedSkills.length === 0 && additionalSkillsList.length === 0) {
       toast({
@@ -223,8 +217,6 @@ export default function Home() {
     setSelectedSkills([]);
     setAdditionalSkill('');
     setAdditionalSkillsList([]);
-    setKnownTechs([]);
-    setCurrentTech('');
     form.reset();
   }
 
@@ -256,13 +248,13 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-8">
                     <FormField
                       control={form.control}
                       name="fieldOfInterest"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel className="text-base">What's your field of interest?</FormLabel>
+                          <FormLabel className="text-base font-semibold">What's your field of interest?</FormLabel>
                            <Combobox
                               options={recommendedFields}
                               value={field.value}
@@ -275,34 +267,52 @@ export default function Home() {
                       )}
                     />
                     <FormField
-                        control={form.control}
-                        name="technologiesKnown"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-base">What technologies do you know?</FormLabel>
-                                <div className="flex gap-2">
-                                    <Input
-                                        value={currentTech}
-                                        onChange={(e) => setCurrentTech(e.target.value)}
-                                        placeholder="e.g., React, Python..."
-                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddKnownTech(); } }}
-                                        className="py-6 text-base"
-                                    />
-                                    <Button type="button" onClick={handleAddKnownTech} variant="outline" size="lg">Add</Button>
-                                </div>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {knownTechs.map((tech) => (
-                                        <Badge key={tech} variant="secondary" className="text-base py-1 px-3 flex items-center gap-2">
-                                            {tech}
-                                            <button type="button" onClick={() => handleRemoveKnownTech(tech)} className="rounded-full hover:bg-muted-foreground/20 p-0.5">
-                                                <XIcon className="w-3 h-3" />
-                                            </button>
-                                        </Badge>
-                                    ))}
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name="technologiesKnown"
+                      render={() => (
+                        <FormItem>
+                          <div className="mb-4">
+                            <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
+                            <FormDescription>Select all that apply.</FormDescription>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                          {knownTechnologies.map((item) => (
+                            <FormField
+                              key={item.id}
+                              control={form.control}
+                              name="technologiesKnown"
+                              render={({ field }) => {
+                                return (
+                                  <FormItem
+                                    key={item.id}
+                                    className="flex flex-row items-center space-x-3 space-y-0 p-3 bg-card border-2 border-foreground/30 rounded-lg transition-all has-[:checked]:bg-primary/10 has-[:checked]:ring-2 has-[:checked]:ring-primary"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(item.id)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== item.id
+                                                )
+                                              )
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer flex-1">
+                                      {item.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )
+                              }}
+                            />
+                          ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                      <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                         {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
@@ -415,5 +425,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
