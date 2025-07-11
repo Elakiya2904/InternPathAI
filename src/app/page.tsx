@@ -13,11 +13,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy, CheckCircle2, BookOpen, Lightbulb, ListTodo } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -46,17 +47,46 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
             </div>
             {!isLast && <div className="mt-2 w-0.5 h-24 bg-primary/20" />}
         </div>
-        <div className="ml-4 -mt-2">
-            <div className="relative p-6 rounded-2xl bg-card border border-border shadow-lg" style={{ clipPath: 'url(#cloud-clip-path)' }}>
-                 <svg width="0" height="0">
-                    <defs>
-                        <clipPath id="cloud-clip-path" clipPathUnits="objectBoundingBox">
-                        <path d="M0.419,0.038 C0.323,0.05,0.222,0.134,0.165,0.234 C0.032,0.466,-0.021,0.727,0.012,0.991 C0.012,0.991,0.012,0.991,0.012,0.992 C0.012,0.995,0.013,0.998,0.013,1 H0.99 C0.992,1,0.995,0.997,0.997,0.995 C1.011,0.903,1.002,0.799,0.975,0.709 C0.92,0.518,0.79,0.38,0.618,0.291 C0.514,0.238,0.4,0.24,0.301,0.284 C0.232,0.315,0.166,0.326,0.103,0.311 C0.08,0.305,0.06,0.286,0.05,0.264 C0.025,0.198,0.046,0.126,0.098,0.089 C0.194,0.02,0.307,-0.009,0.419,0.004 C0.419,0.004,0.419,0.01,0.419,0.038"></path>
-                        </clipPath>
-                    </defs>
-                 </svg>
-                <h3 className="font-headline text-xl font-bold text-primary">{step.title}</h3>
-                <p className="mt-2 text-muted-foreground">{step.description}</p>
+        <div className="ml-4 -mt-2 w-full">
+            <div className="relative p-0 rounded-2xl bg-card border border-border shadow-lg">
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-none">
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                            <div className="text-left">
+                                <h3 className="font-headline text-xl font-bold text-primary">{step.title}</h3>
+                                <p className="mt-2 text-muted-foreground">{step.description}</p>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-6 pt-0">
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><ListTodo/> Tasks</h4>
+                                    <ul className="space-y-3">
+                                        {step.tasks.map((task, i) => (
+                                            <li key={i} className="flex items-start gap-3">
+                                                <CheckCircle2 className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" />
+                                                <div>
+                                                    <p className="font-semibold">{task.subTaskTitle}</p>
+                                                    <p className="text-muted-foreground text-sm">{task.description}</p>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><BookOpen/> Resources</h4>
+                                    <ul className="space-y-2 list-disc list-inside text-muted-foreground">
+                                        {step.resources.map((resource, i) => <li key={i}>{resource}</li>)}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><Lightbulb/> Project Idea</h4>
+                                    <p className="text-muted-foreground">{step.project}</p>
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
             </div>
         </div>
     </div>
