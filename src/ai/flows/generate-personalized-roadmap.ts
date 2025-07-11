@@ -52,16 +52,19 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalizedRoadmapPrompt',
   input: {schema: GeneratePersonalizedRoadmapInputSchema},
   output: {schema: GeneratePersonalizedRoadmapOutputSchema},
-  prompt: `You are a career advisor specializing in creating detailed, personalized roadmaps for internships.
+  prompt: `You are a career advisor specializing in creating detailed, personalized roadmaps for internships, similar in style to roadmap.sh.
 
 You will generate a roadmap with distinct, comprehensive steps to learn the selected skills and prepare for internships in the specified field of interest.
 
+IMPORTANT: Break down broad skills (e.g., "Frontend Development") into fundamental, individual technologies or concepts (e.g., "HTML", "CSS", "JavaScript"). Each fundamental skill should be its own step in the roadmap. Do not group multiple skills like "HTML, CSS, and JS" into a single step.
+
 For each step in the roadmap, you must provide:
-1.  A clear 'title' and a high-level 'description'.
-2.  A single, relevant icon name from the lucide-react library for the 'icon' field.
-3.  A list of 'tasks', where each task has a 'subTaskTitle' and a 'description'. These should be specific, actionable items.
-4.  A list of 'resources' as strings, suggesting where the user can learn (e.g., 'Official React Docs', 'freeCodeCamp YouTube channel').
-5.  A single, relevant 'project' idea that allows the user to apply the skills from this step.
+1.  A clear 'title' for the individual skill (e.g., 'HTML', 'CSS').
+2.  A high-level 'description' of what this step entails.
+3.  A single, relevant icon name from the lucide-react library for the 'icon' field.
+4.  A list of 'tasks', where each task has a 'subTaskTitle' and a 'description'. These should be specific, actionable items.
+5.  A list of 'resources' as strings, suggesting where the user can learn (e.g., 'Official React Docs', 'freeCodeCamp YouTube channel').
+6.  A single, relevant 'project' idea that allows the user to apply the skills from this step.
 
 Finally, you will also provide overall personalized 'advice' and recommendations to the user based on their profile.
 
