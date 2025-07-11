@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy, CheckCircle2, BookOpen, Lightbulb, ListTodo } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy, CheckCircle2, BookOpen, Lightbulb, ListTodo, ArrowDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -45,7 +45,7 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
             <div className="bg-primary/10 text-primary rounded-full w-16 h-16 flex items-center justify-center shadow-lg border-2 border-primary/20">
                 <Icon className="w-8 h-8" />
             </div>
-            {!isLast && <div className="mt-2 w-0.5 h-24 bg-primary/20" />}
+            {!isLast && <div className="mt-2 w-0.5 h-full min-h-24 bg-primary/20" />}
         </div>
         <div className="ml-4 -mt-2 w-full">
             <div className="relative p-0 rounded-2xl bg-card border border-border shadow-lg">
@@ -332,7 +332,7 @@ export default function Home() {
                       <CardDescription className="text-lg text-muted-foreground">Here's a step-by-step guide to help you prepare for your dream internship.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
+                      <div className="space-y-0">
                         {roadmapData.roadmap.map((step, index) => (
                            <RoadmapStep key={index} step={step} isLast={index === roadmapData.roadmap.length - 1} />
                         ))}
