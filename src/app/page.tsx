@@ -36,19 +36,27 @@ const internships = [
     { title: 'Product Manager Intern', company: 'Stripe', link: 'https://stripe.com/jobs/search?role=intern', dataAiHint: "product manager" },
 ];
 
-const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput['roadmap'][0], isLast: boolean }) => {
+const RoadmapStep = ({ step, index }: { step: GeneratePersonalizedRoadmapOutput['roadmap'][0], index: number }) => {
   const Icon = icons[step.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
+  const isLeft = index % 2 === 0;
 
   return (
-    <div className="relative flex items-start">
-        <div className="flex-shrink-0 w-24 flex flex-col items-center">
-            <div className="bg-primary/10 text-primary rounded-full w-12 h-12 flex items-center justify-center border-2 border-primary/20">
-                <Icon className="w-6 h-6" />
-            </div>
-            {!isLast && <div className="mt-2 w-0.5 h-full min-h-24 bg-primary/20" />}
+    <div className="relative flex justify-center">
+      <div className={cn("w-[calc(50%-2rem)]", isLeft ? "order-1 text-right" : "order-3")}>
+        {/* Empty div for spacing */}
+      </div>
+
+      <div className="order-2 flex flex-col items-center w-16">
+        <div className="z-10 bg-primary/10 text-primary rounded-full w-12 h-12 flex items-center justify-center border-4 border-background">
+          <Icon className="w-6 h-6" />
         </div>
-        <div className="ml-4 -mt-2 w-full">
-             <Card className="bg-card border-2 border-primary/20 rounded-lg shadow-md mb-8">
+        <div className="w-0.5 h-full min-h-24 bg-primary/20" />
+      </div>
+
+      <div className={cn("w-[calc(50%-2rem)] pb-8", isLeft ? "order-3" : "order-1")}>
+        <div className={cn("relative", isLeft ? 'pl-4' : 'pr-4')}>
+            <div className={cn("absolute top-5 h-0.5 w-4 bg-primary/20", isLeft ? '-left-0' : '-right-0')}></div>
+             <Card className="bg-card border-2 border-primary/20 rounded-lg shadow-md">
                 <CardHeader>
                     <CardTitle className="text-xl font-bold text-primary flex items-center justify-between">
                         {step.title}
@@ -62,9 +70,7 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
                         </AccordionTrigger>
                         <AccordionContent className="p-6 pt-2">
                             <div className="space-y-6">
-                                <div className="relative pl-6">
-                                    <div className="absolute -left-0 top-3 h-[calc(100%-1.5rem)] w-0.5 bg-primary/20"></div>
-                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
+                                <div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><ListTodo/> Tasks</h4>
                                     <ul className="space-y-3">
                                         {step.tasks.map((task, i) => (
@@ -78,16 +84,13 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
                                         ))}
                                     </ul>
                                 </div>
-                                <div className="relative pl-6">
-                                    <div className="absolute -left-0 top-3 h-[calc(100%-1.5rem)] w-0.5 bg-primary/20"></div>
-                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
+                                <div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><BookOpen/> Resources</h4>
                                     <ul className="space-y-2 list-disc list-inside text-muted-foreground">
                                         {step.resources.map((resource, i) => <li key={i}>{resource}</li>)}
                                     </ul>
                                 </div>
-                                <div className="relative pl-6">
-                                    <div className="absolute -left-0 top-3 h-0.5 w-4 bg-primary/20"></div>
+                                <div>
                                     <h4 className="font-bold text-lg mb-3 flex items-center gap-2 text-primary"><Lightbulb/> Project Idea</h4>
                                     <p className="text-muted-foreground">{step.project}</p>
                                 </div>
@@ -97,6 +100,7 @@ const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput
                 </Accordion>
              </Card>
         </div>
+      </div>
     </div>
   );
 };
@@ -339,10 +343,11 @@ export default function Home() {
                     <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Personalized Roadmap</h2>
                     <p className="text-lg text-muted-foreground mt-2">Here's a step-by-step guide to help you prepare for your dream internship.</p>
                   </div>
-                  <div className="space-y-0">
-                    {roadmapData.roadmap.map((step, index) => (
-                       <RoadmapStep key={index} step={step} isLast={index === roadmapData.roadmap.length - 1} />
-                    ))}
+                  <div className="relative">
+                     <div className="absolute left-1/2 top-0 h-full w-0.5 bg-primary/20" />
+                      {roadmapData.roadmap.map((step, index) => (
+                         <RoadmapStep key={index} step={step} index={index} />
+                      ))}
                   </div>
                 </div>
 
@@ -378,5 +383,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
