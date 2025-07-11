@@ -110,12 +110,13 @@ export function MultiSelectCombobox({
             <CommandList>
                 <CommandEmpty>No option found. Press Enter to add.</CommandEmpty>
                 <CommandGroup>
-                  <div className="grid grid-cols-3 gap-1">
-                    {filteredOptions.map((option) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 p-1">
+                    {options.map((option) => (
                       <CommandItem
                       key={option.value}
                       value={option.value}
                       onSelect={handleSelect}
+                      className="w-full"
                       >
                       <Check
                           className={cn(
@@ -123,7 +124,7 @@ export function MultiSelectCombobox({
                           selected.includes(option.value) ? "opacity-100" : "opacity-0"
                           )}
                       />
-                      {option.label}
+                      <span className="flex-1">{option.label}</span>
                       </CommandItem>
                     ))}
                   </div>
