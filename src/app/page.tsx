@@ -18,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -39,48 +40,52 @@ const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutp
   const Icon = icons[detail.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
 
   return (
-    <Card className="shadow-2xl shadow-primary/10 border-2 w-full">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-3">
-          <Icon className="w-8 h-8 text-primary" />
-          {detail.title}
-        </CardTitle>
-        <CardDescription className="text-base">{detail.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><ListTodo /> Tasks</h4>
-          <ul className="space-y-3">
-            {detail.tasks.map((task, i) => (
-              <li key={i} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-md">
-                <div className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-semibold">{task.subTaskTitle}</p>
-                  <p className="text-muted-foreground text-sm">{task.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+    <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card">
+      <AccordionTrigger className="p-6 text-left hover:no-underline">
+        <div className="w-full">
+            <CardTitle className="text-2xl flex items-center gap-3">
+              <Icon className="w-8 h-8 text-primary" />
+              {detail.title}
+            </CardTitle>
+            <CardDescription className="text-base mt-2">{detail.description}</CardDescription>
         </div>
-        <Separator />
-        <div>
-          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><BookOpen /> Resources</h4>
-          <ul className="space-y-2 list-disc list-inside text-muted-foreground pl-2">
-            {detail.resources.map((resource, i) => <li key={i} className="mb-1">{resource}</li>)}
-          </ul>
-        </div>
-        <Separator />
-        <div>
-          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Lightbulb /> Project Idea</h4>
-          <p className="text-muted-foreground p-4 bg-secondary/50 rounded-md border border-border">{detail.project}</p>
-        </div>
-      </CardContent>
-    </Card>
+      </AccordionTrigger>
+      <AccordionContent>
+        <CardContent className="space-y-6 pt-0">
+          <div>
+            <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><ListTodo /> Tasks</h4>
+            <ul className="space-y-3">
+              {detail.tasks.map((task, i) => (
+                <li key={i} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-md">
+                  <div className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{task.subTaskTitle}</p>
+                    <p className="text-muted-foreground text-sm">{task.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Separator />
+          <div>
+            <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><BookOpen /> Resources</h4>
+            <ul className="space-y-2 list-disc list-inside text-muted-foreground pl-2">
+              {detail.resources.map((resource, i) => <li key={i} className="mb-1">{resource}</li>)}
+            </ul>
+          </div>
+          <Separator />
+          <div>
+            <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Lightbulb /> Project Idea</h4>
+            <p className="text-muted-foreground p-4 bg-secondary/50 rounded-md border border-border">{detail.project}</p>
+          </div>
+        </CardContent>
+      </AccordionContent>
+    </AccordionItem>
   );
 };
 
@@ -321,11 +326,11 @@ export default function Home() {
                   <p className="text-lg text-muted-foreground mt-2">Here is your step-by-step plan to prepare for your dream internship.</p>
                </div>
 
-               <div className="space-y-6">
-                {roadmapData.roadmap.map((detail, index) => (
-                  <RoadmapDetailCard key={index} detail={detail} />
-                ))}
-               </div>
+                <Accordion type="single" collapsible className="w-full space-y-4">
+                  {roadmapData.roadmap.map((detail, index) => (
+                    <RoadmapDetailCard key={index} detail={detail} />
+                  ))}
+                </Accordion>
 
               <Card className="shadow-2xl shadow-primary/10 border-2">
                   <CardHeader>
@@ -359,5 +364,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
