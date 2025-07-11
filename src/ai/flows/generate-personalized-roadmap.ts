@@ -22,8 +22,14 @@ const GeneratePersonalizedRoadmapInputSchema = z.object({
 });
 export type GeneratePersonalizedRoadmapInput = z.infer<typeof GeneratePersonalizedRoadmapInputSchema>;
 
+const RoadmapStepSchema = z.object({
+    title: z.string().describe("The title of the roadmap step."),
+    description: z.string().describe("A detailed description of the roadmap step."),
+    icon: z.string().describe("A relevant lucide-react icon name for this step (e.g., 'Code', 'BookOpen', 'Milestone')."),
+});
+
 const GeneratePersonalizedRoadmapOutputSchema = z.object({
-  roadmap: z.string().describe('A personalized roadmap with steps and resources.'),
+  roadmap: z.array(RoadmapStepSchema).describe('A personalized roadmap with discrete steps.'),
   advice: z.string().describe('Personalized advice and recommendations for the user.'),
 });
 export type GeneratePersonalizedRoadmapOutput = z.infer<typeof GeneratePersonalizedRoadmapOutputSchema>;
@@ -40,7 +46,7 @@ const prompt = ai.definePrompt({
   output: {schema: GeneratePersonalizedRoadmapOutputSchema},
   prompt: `You are a career advisor specializing in creating personalized roadmaps for internships.
 
-You will generate a roadmap with steps and resources to learn the selected skills and prepare for internships in the specified field of interest.
+You will generate a roadmap with distinct steps to learn the selected skills and prepare for internships in the specified field of interest. Each step should have a title, a detailed description, and a single relevant icon name from the lucide-react library.
 
 You will also provide personalized advice and recommendations to the user.
 

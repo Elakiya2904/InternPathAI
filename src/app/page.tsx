@@ -13,10 +13,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, type LucideIcon, icons, Cloudy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
+import { cn } from '@/lib/utils';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -33,6 +34,35 @@ const internships = [
     { title: 'AI/ML Research Intern', company: 'Google DeepMind', link: 'https://deepmind.google/careers/', dataAiHint: "AI research" },
     { title: 'Product Manager Intern', company: 'Stripe', link: 'https://stripe.com/jobs/search?role=intern', dataAiHint: "product manager" },
 ];
+
+const RoadmapStep = ({ step, isLast }: { step: GeneratePersonalizedRoadmapOutput['roadmap'][0], isLast: boolean }) => {
+  const Icon = icons[step.icon as keyof typeof icons] as LucideIcon || Cloudy;
+
+  return (
+    <div className="relative flex items-start">
+        <div className="flex-shrink-0 w-24 flex flex-col items-center">
+            <div className="bg-primary/10 text-primary rounded-full w-16 h-16 flex items-center justify-center shadow-lg border-2 border-primary/20">
+                <Icon className="w-8 h-8" />
+            </div>
+            {!isLast && <div className="mt-2 w-0.5 h-24 bg-primary/20" />}
+        </div>
+        <div className="ml-4 -mt-2">
+            <div className="relative p-6 rounded-2xl bg-card border border-border shadow-lg" style={{ clipPath: 'url(#cloud-clip-path)' }}>
+                 <svg width="0" height="0">
+                    <defs>
+                        <clipPath id="cloud-clip-path" clipPathUnits="objectBoundingBox">
+                        <path d="M0.419,0.038 C0.323,0.05,0.222,0.134,0.165,0.234 C0.032,0.466,-0.021,0.727,0.012,0.991 C0.012,0.991,0.012,0.991,0.012,0.992 C0.012,0.995,0.013,0.998,0.013,1 H0.99 C0.992,1,0.995,0.997,0.997,0.995 C1.011,0.903,1.002,0.799,0.975,0.709 C0.92,0.518,0.79,0.38,0.618,0.291 C0.514,0.238,0.4,0.24,0.301,0.284 C0.232,0.315,0.166,0.326,0.103,0.311 C0.08,0.305,0.06,0.286,0.05,0.264 C0.025,0.198,0.046,0.126,0.098,0.089 C0.194,0.02,0.307,-0.009,0.419,0.004 C0.419,0.004,0.419,0.01,0.419,0.038"></path>
+                        </clipPath>
+                    </defs>
+                 </svg>
+                <h3 className="font-headline text-xl font-bold text-primary">{step.title}</h3>
+                <p className="mt-2 text-muted-foreground">{step.description}</p>
+            </div>
+        </div>
+    </div>
+  );
+};
+
 
 export default function Home() {
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
@@ -266,15 +296,19 @@ export default function Home() {
 
           {step === 'roadmap' && roadmapData && (
              <div className="space-y-8">
-               <Card className="shadow-2xl shadow-primary/10 border-none">
-                  <CardHeader>
+               <Card className="shadow-2xl shadow-primary/10 border-none bg-transparent">
+                    <CardHeader>
                       <CardTitle className="font-headline text-3xl flex items-center gap-3"><Wand2 className="text-accent" /> Your Personalized Roadmap</CardTitle>
                       <CardDescription className="text-lg text-muted-foreground">Here's a step-by-step guide to help you prepare for your dream internship.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="prose dark:prose-invert max-w-none prose-p:text-lg prose-headings:text-primary prose-strong:text-foreground prose-li:text-lg">
-                      <ReactMarkdown>{roadmapData.roadmap}</ReactMarkdown>
-                  </CardContent>
-              </Card>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {roadmapData.roadmap.map((step, index) => (
+                           <RoadmapStep key={index} step={step} isLast={index === roadmapData.roadmap.length - 1} />
+                        ))}
+                      </div>
+                    </CardContent>
+                </Card>
 
               <Card className="shadow-2xl shadow-primary/10 border-none">
                   <CardHeader>
