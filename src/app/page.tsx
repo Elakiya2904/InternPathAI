@@ -41,21 +41,27 @@ const RoadmapStep = ({ step, index }: { step: GeneratePersonalizedRoadmapOutput[
   const isLeft = index % 2 === 0;
 
   return (
-    <div className="relative flex justify-center">
-      <div className={cn("w-[calc(50%-2rem)]", isLeft ? "order-1 text-right" : "order-3")}>
-        {/* Empty div for spacing */}
-      </div>
-
-      <div className="order-2 flex flex-col items-center w-16">
-        <div className="z-10 bg-primary/10 text-primary rounded-full w-12 h-12 flex items-center justify-center border-4 border-background">
-          <Icon className="w-6 h-6" />
+    <div className="relative flex items-start justify-center">
+      {/* Spacer for the side opposite the card */}
+      <div className={cn("w-1/2", isLeft ? "order-1" : "order-3")} />
+      
+      {/* Central timeline and icon */}
+      <div className={cn("relative order-2 flex w-16 flex-shrink-0 flex-col items-center", isLeft ? "mr-[-1px]" : "ml-[-1px]")}>
+        <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border-4 border-background">
+          <Icon className="h-6 w-6" />
         </div>
-        <div className="w-0.5 h-full min-h-24 bg-primary/20" />
+        <div className="h-full min-h-24 w-0.5 bg-primary/20" />
       </div>
 
-      <div className={cn("w-[calc(50%-2rem)] pb-8", isLeft ? "order-3" : "order-1")}>
-        <div className={cn("relative", isLeft ? 'pl-4' : 'pr-4')}>
-            <div className={cn("absolute top-5 h-0.5 w-4 bg-primary/20", isLeft ? '-left-0' : '-right-0')}></div>
+      {/* Card and Branch */}
+      <div className={cn("w-1/2 pb-8", isLeft ? "order-3" : "order-1")}>
+        <div className={cn("relative", isLeft ? 'pl-8' : 'pr-8')}>
+            {/* Branch and Arrow */}
+            <div className={cn("absolute top-5 h-0.5 w-8 bg-primary/20", isLeft ? 'left-0' : 'right-0')} />
+            <div className={cn("absolute top-[1.10rem] h-0 w-0 border-t-[6px] border-b-[6px] border-transparent",
+                isLeft ? 'left-8 border-l-[6px] border-l-primary/30' : 'right-8 border-r-[6px] border-r-primary/30'
+            )} />
+
              <Card className="bg-card border-2 border-primary/20 rounded-lg shadow-md">
                 <CardHeader>
                     <CardTitle className="text-xl font-bold text-primary flex items-center justify-between">
@@ -344,7 +350,8 @@ export default function Home() {
                     <p className="text-lg text-muted-foreground mt-2">Here's a step-by-step guide to help you prepare for your dream internship.</p>
                   </div>
                   <div className="relative">
-                     <div className="absolute left-1/2 top-0 h-full w-0.5 bg-primary/20" />
+                      {/* Central Line - positioned absolutely */}
+                     <div className="absolute left-1/2 top-0 h-full w-0.5 bg-primary/20 transform -translate-x-1/2" />
                       {roadmapData.roadmap.map((step, index) => (
                          <RoadmapStep key={index} step={step} index={index} />
                       ))}
