@@ -8,17 +8,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
-import { generateMindMap, type GenerateMindMapOutput } from '@/ai/flows/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, icons, LucideIcon, ListTodo, BookOpen, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
-import { MindMap } from '@/components/ui/mindmap';
+import { Separator } from '@/components/ui/separator';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -36,12 +35,60 @@ const internships = [
     { title: 'Product Manager Intern', company: 'Stripe', link: 'https://stripe.com/jobs/search?role=intern', dataAiHint: "product manager" },
 ];
 
+const RoadmapDetailCard = ({ detail }: { detail: GeneratePersonalizedRoadmapOutput['roadmap'][0] }) => {
+  const Icon = icons[detail.icon as keyof typeof icons] as LucideIcon || BrainCircuit;
+
+  return (
+    <Card className="shadow-2xl shadow-primary/10 border-2 w-full">
+      <CardHeader>
+        <CardTitle className="text-2xl flex items-center gap-3">
+          <Icon className="w-8 h-8 text-primary" />
+          {detail.title}
+        </CardTitle>
+        <CardDescription className="text-base">{detail.description}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><ListTodo /> Tasks</h4>
+          <ul className="space-y-3">
+            {detail.tasks.map((task, i) => (
+              <li key={i} className="flex items-start gap-3 p-3 bg-secondary/50 rounded-md">
+                <div className="w-5 h-5 mt-1 text-green-500 flex-shrink-0" >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8.5 12.5L10.5 14.5L15.5 9.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold">{task.subTaskTitle}</p>
+                  <p className="text-muted-foreground text-sm">{task.description}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Separator />
+        <div>
+          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><BookOpen /> Resources</h4>
+          <ul className="space-y-2 list-disc list-inside text-muted-foreground pl-2">
+            {detail.resources.map((resource, i) => <li key={i} className="mb-1">{resource}</li>)}
+          </ul>
+        </div>
+        <Separator />
+        <div>
+          <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Lightbulb /> Project Idea</h4>
+          <p className="text-muted-foreground p-4 bg-secondary/50 rounded-md border border-border">{detail.project}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 export default function Home() {
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
   const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
   const [roadmapData, setRoadmapData] = useState<GeneratePersonalizedRoadmapOutput | null>(null);
-  const [mindMapData, setMindMapData] = useState<GenerateMindMapOutput | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
@@ -111,13 +158,6 @@ export default function Home() {
         additionalSkills: additionalSkillsList,
       });
       setRoadmapData(roadmapResult);
-
-      const mindMapResult = await generateMindMap({
-        fieldOfInterest: userInput.fieldOfInterest,
-        skills: selectedSkills.concat(additionalSkillsList),
-      });
-      setMindMapData(mindMapResult);
-
       setStep('roadmap');
     } catch (error) {
       console.error(error);
@@ -142,7 +182,6 @@ export default function Home() {
     setLoading(false);
     setSkillsData(null);
     setRoadmapData(null);
-    setMindMapData(null);
     setUserInput(null);
     setSelectedSkills([]);
     setAdditionalSkill('');
@@ -165,8 +204,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <AppHeader />
-      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-4xl xl:max-w-7xl animate-in fade-in-50 duration-500">
+      <main className="flex-grow flex flex-col items-center p-4 sm:p-8">
+        <div className="w-full max-w-4xl xl:max-w-5xl animate-in fade-in-50 duration-500">
           {step === 'input' && (
             <Card className="shadow-2xl shadow-primary/10 border-2">
               <CardHeader className="text-center">
@@ -275,19 +314,18 @@ export default function Home() {
             </Card>
           )}
 
-          {step === 'roadmap' && mindMapData && roadmapData && (
+          {step === 'roadmap' && roadmapData && (
              <div className="space-y-8 w-full">
-               <div>
-                  <div className="text-center mb-8">
-                    <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Personalized Roadmap</h2>
-                    <p className="text-lg text-muted-foreground mt-2">Here's a mind map of skills to prepare for your dream internship. Click on a skill for details.</p>
-                  </div>
-                  <Card className="shadow-2xl shadow-primary/10 border-2 w-full">
-                    <CardContent className="p-4 sm:p-6">
-                        <MindMap data={mindMapData} roadmapDetails={roadmapData.roadmap} />
-                    </CardContent>
-                  </Card>
-                </div>
+               <div className="text-center mb-8">
+                  <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Detailed Roadmap</h2>
+                  <p className="text-lg text-muted-foreground mt-2">Here is your step-by-step plan to prepare for your dream internship.</p>
+               </div>
+
+               <div className="space-y-6">
+                {roadmapData.roadmap.map((detail, index) => (
+                  <RoadmapDetailCard key={index} detail={detail} />
+                ))}
+               </div>
 
               <Card className="shadow-2xl shadow-primary/10 border-2">
                   <CardHeader>
@@ -321,3 +359,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

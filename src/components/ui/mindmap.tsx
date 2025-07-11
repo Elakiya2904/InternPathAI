@@ -136,6 +136,7 @@ type MindMapProps = {
 };
 
 export const MindMap = ({ data, roadmapDetails }: MindMapProps) => {
+  // This component is currently not used but is kept for potential future use.
   const rootNode = data.nodes.find(n => !data.edges.some(e => e.target === n.id));
 
   if (!rootNode) {
@@ -159,3 +160,5 @@ export const MindMap = ({ data, roadmapDetails }: MindMapProps) => {
     </div>
   );
 };
+
+    

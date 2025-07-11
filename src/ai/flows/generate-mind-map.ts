@@ -1,7 +1,8 @@
+
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating a mind map structure from a list of skills.
+ * @fileOverview This file defines a Genkit flow for generating a mind map structure from a list of skills. This flow is currently not used but is kept for potential future use.
  *
  * - generateMindMap - A function that generates the mind map data.
  * - GenerateMindMapInput - The input type for the generateMindMap function.
@@ -95,3 +96,5 @@ const generateMindMapFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
