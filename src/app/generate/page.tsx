@@ -195,8 +195,11 @@ const RoadmapDetailCard = ({
 export default function GenerateRoadmapPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [step, setStep] = useState<'input' | 'roadmap'>('input');
+  const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
+  const [skillsChecklist, setSkillsChecklist] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [additionalSkill, setAdditionalSkill] = useState('');
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   
@@ -258,34 +261,68 @@ export default function GenerateRoadmapPage() {
       { value: 'UI/UX Design', label: 'UI/UX Design' },
   ];
 
-  const handleGenerateRoadmap = async (data: UserInput) => {
+  const handleGenerateChecklist = async (data: UserInput) => {
     setLoading(true);
     setUserInput(data);
     try {
-      // Step 1: Generate skills checklist
-      const skillsResult = await generateSkillsChecklist({
-          fieldOfInterest: data.fieldOfInterest[0],
-          technologiesKnown: data.technologiesKnown.join(', ')
-      });
-
-      // Step 2: Immediately generate roadmap with the skills from step 1
-      const roadmapResult = await generatePersonalizedRoadmap({
+      const result = await generateSkillsChecklist({
         fieldOfInterest: data.fieldOfInterest[0],
-        selectedSkills: skillsResult.skillsChecklist,
-        additionalSkills: [], // No additional skills since we removed that step
+        technologiesKnown: data.technologiesKnown.join(', '),
+      });
+      setSkillsChecklist(result.skillsChecklist);
+      setSelectedSkills(result.skillsChecklist);
+      setStep('checklist');
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate skills checklist. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleAddSkill = () => {
+    if (additionalSkill && !selectedSkills.includes(additionalSkill)) {
+      const updatedSkills = [...selectedSkills, additionalSkill];
+      setSelectedSkills(updatedSkills);
+      // Also add to the main checklist if it's not there, so it can be toggled
+      if (!skillsChecklist.includes(additionalSkill)) {
+        setSkillsChecklist(updatedSkills);
+      }
+      setAdditionalSkill('');
+    }
+  };
+
+  const handleSkillToggle = (skill: string) => {
+    setSelectedSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+    );
+  };
+  
+  const handleGenerateRoadmap = async () => {
+    if (!userInput) return;
+    setLoading(true);
+    try {
+      const result = await generatePersonalizedRoadmap({
+        fieldOfInterest: userInput.fieldOfInterest[0],
+        selectedSkills,
+        additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)), // Pass any user-added skills
       });
 
-      const roadmapWithCompletion = roadmapResult.roadmap.map(step => ({
+      const roadmapWithCompletion = result.roadmap.map(step => ({
         ...step,
         isCompleted: false,
         certificate: undefined,
       }));
-      setRoadmapData({ ...roadmapResult, roadmap: roadmapWithCompletion });
+      setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
       
       setStep('roadmap');
     } catch (error) {
       console.error(error);
-      toast({
+       toast({
         title: 'Error',
         description: 'Failed to generate your roadmap. Please try again.',
         variant: 'destructive',
@@ -294,7 +331,7 @@ export default function GenerateRoadmapPage() {
       setLoading(false);
     }
   };
-  
+
   const handleCompleteStep = (index: number, file: File) => {
       if (roadmapData) {
         const newRoadmap = [...roadmapData.roadmap];
@@ -312,6 +349,8 @@ export default function GenerateRoadmapPage() {
     setStep('input');
     setRoadmapData(null);
     setUserInput(null);
+    setSkillsChecklist([]);
+    setSelectedSkills([]);
     form.reset();
   };
 
@@ -329,7 +368,7 @@ export default function GenerateRoadmapPage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleGenerateRoadmap)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-8">
                   <FormField
                     control={form.control}
                     name="fieldOfInterest"
@@ -395,7 +434,7 @@ export default function GenerateRoadmapPage() {
                     )}
                   />
                    <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
-                      {loading ? <Loader2 className="animate-spin" /> : "Generate My Roadmap"}
+                      {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
                       {!loading && <ArrowRight className="ml-2" />}
                     </Button>
                 </form>
@@ -403,6 +442,59 @@ export default function GenerateRoadmapPage() {
             </CardContent>
           </Card>
         )}
+        
+        {step === 'checklist' && (
+          <Card className="shadow-2xl shadow-primary/10 border-2">
+            <CardHeader className="text-center">
+              <div className="mx-auto bg-primary/10 rounded-full p-3 w-fit mb-4">
+                <ListTodo className="w-10 h-10 text-primary" />
+              </div>
+              <CardTitle className="font-headline text-3xl md:text-4xl">Review Your Skills</CardTitle>
+              <CardDescription className="text-lg text-muted-foreground">
+                We've generated a list of skills based on your profile. Select the ones you want to include in your roadmap.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {skillsChecklist.map((skill) => (
+                        <div key={skill} className="flex items-center space-x-2 p-3 bg-secondary/50 rounded-md">
+                            <Checkbox
+                                id={skill}
+                                checked={selectedSkills.includes(skill)}
+                                onCheckedChange={() => handleSkillToggle(skill)}
+                            />
+                            <label htmlFor={skill} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                                {skill}
+                            </label>
+                        </div>
+                    ))}
+                </div>
+                 <Separator />
+                <div className="space-y-2">
+                    <Label htmlFor="additional-skill" className="font-semibold">Add a missing skill</Label>
+                    <div className="flex gap-2">
+                         <Input
+                            id="additional-skill"
+                            value={additionalSkill}
+                            onChange={(e) => setAdditionalSkill(e.target.value)}
+                            placeholder="e.g., GraphQL"
+                        />
+                        <Button onClick={handleAddSkill} variant="outline"><PlusCircle className="mr-2" /> Add</Button>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="flex-col sm:flex-row gap-4">
+                 <Button onClick={handleGenerateRoadmap} disabled={loading || selectedSkills.length === 0} size="lg" className="w-full sm:w-auto flex-grow bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
+                    {loading ? <Loader2 className="animate-spin" /> : "Generate My Roadmap"}
+                    {!loading && <ArrowRight className="ml-2" />}
+                </Button>
+                <Button onClick={() => setStep('input')} variant="outline" size="lg" className="w-full sm:w-auto">
+                    Back
+                </Button>
+            </CardFooter>
+          </Card>
+        )}
+
 
         {step === 'roadmap' && roadmapData && (
            <div className="space-y-8 w-full">
@@ -460,3 +552,5 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
+
+    
