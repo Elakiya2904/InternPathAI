@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
@@ -50,15 +50,42 @@ const iconMap: { [key: string]: LucideIcon } = {
 };
 
 const knownTechnologies = [
-    { value: 'react', label: 'React' },
-    { value: 'javascript', label: 'JavaScript' },
-    { value: 'python', label: 'Python' },
-    { value: 'typescript', label: 'TypeScript' },
     { value: 'html', label: 'HTML' },
     { value: 'css', label: 'CSS' },
+    { value: 'javascript', label: 'JavaScript' },
+    { value: 'typescript', label: 'TypeScript' },
+    { value: 'react', label: 'React' },
+    { value: 'angular', label: 'Angular' },
+    { value: 'vuejs', label: 'Vue.js' },
     { value: 'nodejs', label: 'Node.js' },
+    { value: 'express', label: 'Express.js' },
+    { value: 'python', label: 'Python' },
+    { value: 'django', label: 'Django' },
+    { value: 'flask', label: 'Flask' },
+    { value: 'java', label: 'Java' },
+    { value: 'spring-boot', label: 'Spring Boot' },
+    { value: 'csharp', label: 'C#' },
+    { value: 'dotnet', label: '.NET' },
+    { value: 'php', label: 'PHP' },
+    { value: 'laravel', label: 'Laravel' },
     { value: 'sql', label: 'SQL' },
+    { value: 'mysql', label: 'MySQL' },
+    { value: 'postgresql', label: 'PostgreSQL' },
+    { value: 'mongodb', label: 'MongoDB' },
     { value: 'git', label: 'Git' },
+    { value: 'docker', label: 'Docker' },
+    { value: 'kubernetes', label: 'Kubernetes' },
+    { value: 'aws', label: 'AWS' },
+    { value: 'gcp', label: 'Google Cloud (GCP)' },
+    { value: 'azure', label: 'Microsoft Azure' },
+    { value: 'tensorflow', label: 'TensorFlow' },
+    { value: 'pytorch', label: 'PyTorch' },
+    { value: 'scikit-learn', label: 'Scikit-learn' },
+    { value: 'nextjs', label: 'Next.js' },
+    { value: 'graphql', label: 'GraphQL' },
+    { value: 'swift', label: 'Swift' },
+    { value: 'kotlin', label: 'Kotlin' },
+    { value: 'rust', label: 'Rust' },
 ];
 
 type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: { name: string }; };
@@ -372,13 +399,39 @@ export default function GenerateRoadmapPage() {
                           <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
                           <FormDescription>Select all that apply.</FormDescription>
                         </div>
-                        <MultiSelectCombobox
-                          options={knownTechnologies}
-                          selected={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select or type technologies..."
-                          inputPlaceholder="Search or add a new technology..."
-                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 p-4 border rounded-md">
+                          {knownTechnologies.map((tech) => (
+                            <FormField
+                              key={tech.value}
+                              control={form.control}
+                              name="technologiesKnown"
+                              render={({ field }) => (
+                                <FormItem
+                                  key={tech.value}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(tech.value)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...field.value, tech.value])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== tech.value
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    {tech.label}
+                                  </FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -512,5 +565,3 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
-
-    
