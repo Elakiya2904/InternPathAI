@@ -1,20 +1,19 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
-import { saveRoadmap } from '@/ai/flows/save-roadmap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, Save } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, Save, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -65,7 +64,12 @@ const knownTechnologies = [
     { value: 'git', label: 'Git' },
 ];
 
-type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: File | null; };
+type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: { name: string }; };
+type StoredRoadmap = {
+    roadmapData: { roadmap: RoadmapStepWithCompletion[], advice: string };
+    userInput: UserInput;
+}
+
 
 const RoadmapDetailCard = ({ 
   detail,
@@ -169,7 +173,6 @@ export default function GenerateRoadmapPage() {
   const router = useRouter();
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
@@ -178,6 +181,46 @@ export default function GenerateRoadmapPage() {
   const [additionalSkillsList, setAdditionalSkillsList] = useState<string[]>([]);
   
   const { toast } = useToast();
+  
+  const LOCAL_STORAGE_KEY = 'internpath-roadmap';
+
+  useEffect(() => {
+    if (user) {
+      const savedRoadmap = localStorage.getItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
+      if (savedRoadmap) {
+        try {
+          const { roadmapData: loadedData, userInput: loadedInput }: StoredRoadmap = JSON.parse(savedRoadmap);
+          setRoadmapData(loadedData);
+          setUserInput(loadedInput);
+          setStep('roadmap');
+        } catch (error) {
+          console.error("Failed to parse saved roadmap from localStorage", error);
+          localStorage.removeItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
+        }
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && roadmapData && userInput) {
+        const dataToStore: StoredRoadmap = {
+            roadmapData,
+            userInput,
+        };
+        // We need to remove the File object from the certificate before storing
+        const storableRoadmapData = {
+            ...roadmapData,
+            roadmap: roadmapData.roadmap.map(step => {
+                if (step.certificate) {
+                    return {...step, certificate: { name: step.certificate.name }}
+                }
+                return step;
+            })
+        };
+        localStorage.setItem(`${LOCAL_STORAGE_KEY}-${user.uid}`, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
+    }
+  }, [roadmapData, userInput, user]);
+
 
   const recommendedFields = [
       { value: 'AI/ML', label: 'AI/ML' },
@@ -247,7 +290,7 @@ export default function GenerateRoadmapPage() {
       const roadmapWithCompletion = roadmapResult.roadmap.map(step => ({
         ...step,
         isCompleted: false,
-        certificate: null,
+        certificate: undefined,
       }));
       setRoadmapData({ ...roadmapResult, roadmap: roadmapWithCompletion });
       
@@ -274,45 +317,21 @@ export default function GenerateRoadmapPage() {
       if (roadmapData) {
         const newRoadmap = [...roadmapData.roadmap];
         newRoadmap[index].isCompleted = true;
+        // @ts-ignore
         newRoadmap[index].certificate = file;
         setRoadmapData({ ...roadmapData, roadmap: newRoadmap });
       }
   };
-
-  const handleSaveRoadmap = async () => {
-    if (!user || !roadmapData || !userInput) {
-        toast({
-            title: "Error",
-            description: "Cannot save roadmap. Missing user or roadmap data.",
-            variant: "destructive",
-        });
-        return;
+  
+  const handleStartOver = () => {
+    if(user) {
+        localStorage.removeItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
     }
-    setSaving(true);
-    try {
-        const roadmapToSave = roadmapData.roadmap.map(({isCompleted, certificate, ...rest}) => rest);
-
-        await saveRoadmap({
-            userId: user.uid,
-            fieldOfInterest: userInput.fieldOfInterest,
-            roadmap: roadmapToSave,
-            advice: roadmapData.advice
-        });
-        toast({
-            title: "Success!",
-            description: "Your roadmap has been saved to your dashboard.",
-        });
-        router.push('/dashboard');
-    } catch (error: any) {
-        console.error("Failed to save roadmap: ", error);
-        toast({
-            title: "Error Saving Roadmap",
-            description: error.message,
-            variant: "destructive",
-        });
-    } finally {
-        setSaving(false);
-    }
+    setStep('input');
+    setRoadmapData(null);
+    setUserInput(null);
+    setSkillsData(null);
+    form.reset();
   }
 
 
@@ -448,9 +467,9 @@ export default function GenerateRoadmapPage() {
                     <h2 className="font-headline text-3xl font-bold flex items-center justify-center sm:justify-start gap-3"><Wand2 className="text-primary" /> Your Detailed Roadmap</h2>
                     <p className="text-lg text-muted-foreground mt-2">Here is your step-by-step plan to prepare for your dream internship.</p>
                 </div>
-                <Button onClick={handleSaveRoadmap} disabled={saving} size="lg">
-                    {saving ? <Loader2 className="animate-spin" /> : <Save />}
-                    {saving ? "Saving..." : "Save Roadmap"}
+                <Button onClick={handleStartOver} variant="outline" size="lg">
+                    <RotateCcw />
+                    Start Over
                 </Button>
              </div>
 
