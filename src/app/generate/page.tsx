@@ -22,13 +22,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
+import { Label } from '@/components/ui/label';
 
 const userInputSchema = z.object({
-  fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
   technologiesKnown: z.array(z.string()).min(1, 'Please select at least one technology.'),
 });
 
+const roadmapContextSchema = z.object({
+    fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
+});
+
 type UserInput = z.infer<typeof userInputSchema>;
+type RoadmapContext = z.infer<typeof roadmapContextSchema>;
 
 const internships = [
     { title: 'Frontend Developer Intern', company: 'Vercel', link: 'https://vercel.com/careers', dataAiHint: "frontend developer" },
@@ -93,6 +98,7 @@ type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0]
 type StoredRoadmap = {
     roadmapData: { roadmap: RoadmapStepWithCompletion[], advice: string };
     userInput: UserInput;
+    roadmapContext: RoadmapContext;
 };
 
 const RoadmapDetailCard = ({ 
@@ -202,7 +208,8 @@ export default function GenerateRoadmapPage() {
   const [additionalSkill, setAdditionalSkill] = useState('');
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
-  
+  const [roadmapContext, setRoadmapContext] = useState<RoadmapContext | null>(null);
+
   const { toast } = useToast();
   
   const LOCAL_STORAGE_KEY = 'internpath-roadmap';
@@ -210,9 +217,15 @@ export default function GenerateRoadmapPage() {
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
     defaultValues: {
-      fieldOfInterest: [],
       technologiesKnown: [],
     },
+  });
+
+  const contextForm = useForm<RoadmapContext>({
+      resolver: zodResolver(roadmapContextSchema),
+      defaultValues: {
+          fieldOfInterest: [],
+      },
   });
 
   useEffect(() => {
@@ -220,9 +233,10 @@ export default function GenerateRoadmapPage() {
       const savedRoadmap = localStorage.getItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
       if (savedRoadmap) {
         try {
-          const { roadmapData: loadedData, userInput: loadedInput }: StoredRoadmap = JSON.parse(savedRoadmap);
+          const { roadmapData: loadedData, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
           setRoadmapData(loadedData);
           setUserInput(loadedInput);
+          setRoadmapContext(loadedContext);
           setStep('roadmap');
         } catch (error) {
           console.error("Failed to parse saved roadmap from localStorage", error);
@@ -233,10 +247,11 @@ export default function GenerateRoadmapPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user && roadmapData && userInput) {
+    if (user && roadmapData && userInput && roadmapContext) {
         const dataToStore: StoredRoadmap = {
             roadmapData,
             userInput,
+            roadmapContext,
         };
         const storableRoadmapData = {
             ...roadmapData,
@@ -249,7 +264,7 @@ export default function GenerateRoadmapPage() {
         };
         localStorage.setItem(`${LOCAL_STORAGE_KEY}-${user.uid}`, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
     }
-  }, [roadmapData, userInput, user]);
+  }, [roadmapData, userInput, roadmapContext, user]);
 
 
   const recommendedFields = [
@@ -266,7 +281,7 @@ export default function GenerateRoadmapPage() {
     setUserInput(data);
     try {
       const result = await generateSkillsChecklist({
-        fieldOfInterest: data.fieldOfInterest[0],
+        fieldOfInterest: "Technology", // Use a generic field to get a broad list
         technologiesKnown: data.technologiesKnown.join(', '),
       });
       setSkillsChecklist(result.skillsChecklist);
@@ -288,7 +303,6 @@ export default function GenerateRoadmapPage() {
     if (additionalSkill && !selectedSkills.includes(additionalSkill)) {
       const updatedSkills = [...selectedSkills, additionalSkill];
       setSelectedSkills(updatedSkills);
-      // Also add to the main checklist if it's not there, so it can be toggled
       if (!skillsChecklist.includes(additionalSkill)) {
         setSkillsChecklist(updatedSkills);
       }
@@ -302,14 +316,15 @@ export default function GenerateRoadmapPage() {
     );
   };
   
-  const handleGenerateRoadmap = async () => {
+  const handleGenerateRoadmap = async (data: RoadmapContext) => {
     if (!userInput) return;
     setLoading(true);
+    setRoadmapContext(data);
     try {
       const result = await generatePersonalizedRoadmap({
-        fieldOfInterest: userInput.fieldOfInterest[0],
+        fieldOfInterest: data.fieldOfInterest[0],
         selectedSkills,
-        additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)), // Pass any user-added skills
+        additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)),
       });
 
       const roadmapWithCompletion = result.roadmap.map(step => ({
@@ -349,9 +364,11 @@ export default function GenerateRoadmapPage() {
     setStep('input');
     setRoadmapData(null);
     setUserInput(null);
+    setRoadmapContext(null);
     setSkillsChecklist([]);
     setSelectedSkills([]);
     form.reset();
+    contextForm.reset();
   };
 
   return (
@@ -369,24 +386,6 @@ export default function GenerateRoadmapPage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-8">
-                  <FormField
-                    control={form.control}
-                    name="fieldOfInterest"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-base font-semibold">What's your field of interest?</FormLabel>
-                        <MultiSelectCombobox
-                          options={recommendedFields}
-                          selected={field.value}
-                          onChange={field.onChange}
-                          placeholder="Select or type a field..."
-                          inputPlaceholder="Search or add a new field..."
-                          mode="single"
-                        />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <FormField
                     control={form.control}
                     name="technologiesKnown"
@@ -451,47 +450,73 @@ export default function GenerateRoadmapPage() {
               </div>
               <CardTitle className="font-headline text-3xl md:text-4xl">Review Your Skills</CardTitle>
               <CardDescription className="text-lg text-muted-foreground">
-                We've generated a list of skills based on your profile. Select the ones you want to include in your roadmap.
+                We've generated a list of skills. Refine them and tell us your main goal.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    {skillsChecklist.map((skill) => (
-                        <div key={skill} className="flex items-center space-x-2 p-3 bg-secondary/50 rounded-md">
-                            <Checkbox
-                                id={skill}
-                                checked={selectedSkills.includes(skill)}
-                                onCheckedChange={() => handleSkillToggle(skill)}
-                            />
-                            <label htmlFor={skill} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
-                                {skill}
-                            </label>
-                        </div>
-                    ))}
-                </div>
-                 <Separator />
-                <div className="space-y-2">
-                    <Label htmlFor="additional-skill" className="font-semibold">Add a missing skill</Label>
-                    <div className="flex gap-2">
-                         <Input
-                            id="additional-skill"
-                            value={additionalSkill}
-                            onChange={(e) => setAdditionalSkill(e.target.value)}
-                            placeholder="e.g., GraphQL"
+            <Form {...contextForm}>
+                <form onSubmit={contextForm.handleSubmit(handleGenerateRoadmap)}>
+                    <CardContent className="space-y-6">
+                        <FormField
+                            control={contextForm.control}
+                            name="fieldOfInterest"
+                            render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                                <FormLabel className="text-base font-semibold">What's your primary field of interest?</FormLabel>
+                                <MultiSelectCombobox
+                                    options={recommendedFields}
+                                    selected={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="Select or type a field..."
+                                    inputPlaceholder="Search or add a new field..."
+                                    mode="single"
+                                />
+                                <FormMessage />
+                            </FormItem>
+                            )}
                         />
-                        <Button onClick={handleAddSkill} variant="outline"><PlusCircle className="mr-2" /> Add</Button>
-                    </div>
-                </div>
-            </CardContent>
-            <CardFooter className="flex-col sm:flex-row gap-4">
-                 <Button onClick={handleGenerateRoadmap} disabled={loading || selectedSkills.length === 0} size="lg" className="w-full sm:w-auto flex-grow bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
-                    {loading ? <Loader2 className="animate-spin" /> : "Generate My Roadmap"}
-                    {!loading && <ArrowRight className="ml-2" />}
-                </Button>
-                <Button onClick={() => setStep('input')} variant="outline" size="lg" className="w-full sm:w-auto">
-                    Back
-                </Button>
-            </CardFooter>
+                        <Separator />
+                        <div>
+                            <Label className="text-base font-semibold">Select the skills for your roadmap</Label>
+                            <div className="space-y-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-4">
+                                {skillsChecklist.map((skill) => (
+                                    <div key={skill} className="flex items-center space-x-2 p-3 bg-secondary/50 rounded-md">
+                                        <Checkbox
+                                            id={skill}
+                                            checked={selectedSkills.includes(skill)}
+                                            onCheckedChange={() => handleSkillToggle(skill)}
+                                        />
+                                        <label htmlFor={skill} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                                            {skill}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                            <Label htmlFor="additional-skill" className="font-semibold">Add a missing skill</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="additional-skill"
+                                    value={additionalSkill}
+                                    onChange={(e) => setAdditionalSkill(e.target.value)}
+                                    placeholder="e.g., GraphQL"
+                                />
+                                <Button onClick={handleAddSkill} variant="outline" type="button"><PlusCircle className="mr-2" /> Add</Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex-col sm:flex-row gap-4">
+                        <Button type="submit" disabled={loading || selectedSkills.length === 0} size="lg" className="w-full sm:w-auto flex-grow bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
+                            {loading ? <Loader2 className="animate-spin" /> : "Generate My Roadmap"}
+                            {!loading && <ArrowRight className="ml-2" />}
+                        </Button>
+                        <Button onClick={() => setStep('input')} variant="outline" size="lg" className="w-full sm:w-auto" type="button">
+                            Back
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Form>
           </Card>
         )}
 
@@ -552,5 +577,3 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
-
-    
