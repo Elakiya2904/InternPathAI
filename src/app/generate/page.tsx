@@ -8,12 +8,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
+import { saveRoadmap } from '@/ai/flows/save-roadmap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Combobox } from '@/components/ui/combobox';
@@ -21,6 +22,8 @@ import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.string({
@@ -162,8 +165,11 @@ const RoadmapDetailCard = ({
 };
 
 export default function GenerateRoadmapPage() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
@@ -272,6 +278,43 @@ export default function GenerateRoadmapPage() {
         setRoadmapData({ ...roadmapData, roadmap: newRoadmap });
       }
   };
+
+  const handleSaveRoadmap = async () => {
+    if (!user || !roadmapData || !userInput) {
+        toast({
+            title: "Error",
+            description: "Cannot save roadmap. Missing user or roadmap data.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setSaving(true);
+    try {
+        const roadmapToSave = roadmapData.roadmap.map(({isCompleted, certificate, ...rest}) => rest);
+
+        await saveRoadmap({
+            userId: user.uid,
+            fieldOfInterest: userInput.fieldOfInterest,
+            roadmap: roadmapToSave,
+            advice: roadmapData.advice
+        });
+        toast({
+            title: "Success!",
+            description: "Your roadmap has been saved to your dashboard.",
+        });
+        router.push('/dashboard');
+    } catch (error) {
+        console.error("Failed to save roadmap: ", error);
+        toast({
+            title: "Error Saving Roadmap",
+            description: "There was a problem saving your roadmap. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setSaving(false);
+    }
+  }
+
 
   return (
     <div className="flex-grow flex flex-col items-center p-4 sm:p-8">
@@ -400,9 +443,15 @@ export default function GenerateRoadmapPage() {
 
         {step === 'roadmap' && roadmapData && (
            <div className="space-y-8 w-full">
-             <div className="text-center mb-8">
-                <h2 className="font-headline text-3xl font-bold flex items-center justify-center gap-3"><Wand2 className="text-primary" /> Your Detailed Roadmap</h2>
-                <p className="text-lg text-muted-foreground mt-2">Here is your step-by-step plan to prepare for your dream internship.</p>
+             <div className="text-center mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 className="font-headline text-3xl font-bold flex items-center justify-center sm:justify-start gap-3"><Wand2 className="text-primary" /> Your Detailed Roadmap</h2>
+                    <p className="text-lg text-muted-foreground mt-2">Here is your step-by-step plan to prepare for your dream internship.</p>
+                </div>
+                <Button onClick={handleSaveRoadmap} disabled={saving} size="lg">
+                    {saving ? <Loader2 className="animate-spin" /> : <Save />}
+                    Save Roadmap
+                </Button>
              </div>
 
               <Accordion type="single" collapsible className="w-full space-y-4">
