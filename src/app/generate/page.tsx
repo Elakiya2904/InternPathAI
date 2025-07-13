@@ -16,7 +16,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, Save, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Combobox } from '@/components/ui/combobox';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -25,9 +24,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 
 const userInputSchema = z.object({
-  fieldOfInterest: z.string({
-    required_error: "Please select or enter a field of interest."
-  }).min(1, 'Field of interest is required'),
+  fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
   technologiesKnown: z.array(z.string()).min(1, 'Please select at least one technology.'),
 });
 
@@ -234,7 +231,7 @@ export default function GenerateRoadmapPage() {
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
     defaultValues: {
-      fieldOfInterest: '',
+      fieldOfInterest: [],
       technologiesKnown: [],
     },
   });
@@ -244,7 +241,7 @@ export default function GenerateRoadmapPage() {
     setUserInput(data);
     try {
       const result = await generateSkillsChecklist({
-          ...data,
+          fieldOfInterest: data.fieldOfInterest[0],
           technologiesKnown: data.technologiesKnown.join(', ')
       });
       setSkillsData(result);
@@ -282,7 +279,7 @@ export default function GenerateRoadmapPage() {
     try {
       if (!userInput) throw new Error('User input is missing');
       const roadmapResult = await generatePersonalizedRoadmap({
-        fieldOfInterest: userInput.fieldOfInterest,
+        fieldOfInterest: userInput.fieldOfInterest[0],
         selectedSkills: selectedSkills,
         additionalSkills: additionalSkillsList,
       });
@@ -332,8 +329,7 @@ export default function GenerateRoadmapPage() {
     setUserInput(null);
     setSkillsData(null);
     form.reset();
-  }
-
+  };
 
   return (
     <div className="flex-grow flex flex-col items-center p-4 sm:p-8">
@@ -356,13 +352,14 @@ export default function GenerateRoadmapPage() {
                     render={({ field }) => (
                       <FormItem className="flex flex-col">
                         <FormLabel className="text-base font-semibold">What's your field of interest?</FormLabel>
-                         <Combobox
-                            options={recommendedFields}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Select or type a field..."
-                            inputPlaceholder="Search or add a new field..."
-                          />
+                        <MultiSelectCombobox
+                          options={recommendedFields}
+                          selected={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select or type a field..."
+                          inputPlaceholder="Search or add a new field..."
+                          mode="single"
+                        />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -498,7 +495,7 @@ export default function GenerateRoadmapPage() {
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl flex items-center gap-3"><Briefcase className="text-primary" /> Internship Recommendations</CardTitle>
                     <CardDescription className="text-lg text-muted-foreground">Check out these opportunities that align with your skills.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <div className="grid md:grid-cols-2 gap-4">
                         {internships.map(internship => (
@@ -516,3 +513,5 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
+
+    

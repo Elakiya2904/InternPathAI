@@ -28,6 +28,7 @@ interface MultiSelectComboboxProps {
   placeholder?: string;
   inputPlaceholder?: string;
   className?: string;
+  mode?: 'multiple' | 'single';
 }
 
 export function MultiSelectCombobox({
@@ -37,11 +38,18 @@ export function MultiSelectCombobox({
   placeholder = "Select options...",
   inputPlaceholder = "Search options...",
   className,
+  mode = 'multiple',
 }: MultiSelectComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
 
   const handleSelect = (currentValue: string) => {
+    if (mode === 'single') {
+        onChange([currentValue]);
+        setOpen(false);
+        return;
+    }
+
     const newSelected = selected.includes(currentValue)
       ? selected.filter((item) => item !== currentValue)
       : [...selected, currentValue];
@@ -53,10 +61,11 @@ export function MultiSelectCombobox({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter' && inputValue) {
         if (!selected.includes(inputValue) && !options.find(o => o.value.toLowerCase() === inputValue.toLowerCase())) {
-             const newOption = { label: inputValue, value: inputValue };
-             // Since options is a prop, we can't directly modify it here.
-             // Instead, we just add the value to the selected list.
-             onChange([...selected, inputValue]);
+             const newValues = mode === 'single' ? [inputValue] : [...selected, inputValue];
+             onChange(newValues);
+             if (mode === 'single') {
+                setOpen(false);
+             }
         }
         setInputValue('');
     }
@@ -69,10 +78,6 @@ export function MultiSelectCombobox({
   const getLabel = (value: string) => {
     return options.find(option => option.value === value)?.label || value;
   }
-  
-  const filteredOptions = options.filter(option => 
-    !selected.includes(option.value)
-  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -110,13 +115,13 @@ export function MultiSelectCombobox({
             <CommandList>
                 <CommandEmpty>No option found. Press Enter to add.</CommandEmpty>
                 <CommandGroup>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1 p-1">
+                  <div className="grid grid-cols-1 gap-1 p-1">
                     {options.map((option) => (
                       <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={handleSelect}
-                      className="w-full"
+                        key={option.value}
+                        value={option.value}
+                        onSelect={handleSelect}
+                        className="w-full"
                       >
                       <Check
                           className={cn(
