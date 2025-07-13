@@ -223,6 +223,8 @@ export default function GenerateRoadmapPage() {
     },
   });
 
+  const fieldOfInterestValue = form.watch('fieldOfInterest');
+
   const contextForm = useForm<RoadmapContext>({
       resolver: zodResolver(roadmapContextSchema),
       defaultValues: {
@@ -408,52 +410,54 @@ export default function GenerateRoadmapPage() {
                       )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="technologiesKnown"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="mb-4">
-                          <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
-                          <FormDescription>Select all that apply.</FormDescription>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 p-4 border rounded-md">
-                          {knownTechnologies.map((tech) => (
-                            <FormField
-                              key={tech.value}
-                              control={form.control}
-                              name="technologiesKnown"
-                              render={({ field }) => (
-                                <FormItem
-                                  key={tech.value}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(tech.value)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, tech.value])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== tech.value
+                  {fieldOfInterestValue && fieldOfInterestValue.length > 0 && (
+                    <FormField
+                      control={form.control}
+                      name="technologiesKnown"
+                      render={({ field }) => (
+                        <FormItem className="animate-in fade-in-0 duration-500">
+                          <div className="mb-4">
+                            <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
+                            <FormDescription>Select all that apply.</FormDescription>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 p-4 border rounded-md">
+                            {knownTechnologies.map((tech) => (
+                              <FormField
+                                key={tech.value}
+                                control={form.control}
+                                name="technologiesKnown"
+                                render={({ field }) => (
+                                  <FormItem
+                                    key={tech.value}
+                                    className="flex flex-row items-start space-x-3 space-y-0"
+                                  >
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value?.includes(tech.value)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? field.onChange([...field.value, tech.value])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                  (value) => value !== tech.value
+                                                )
                                               )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal cursor-pointer">
-                                    {tech.label}
-                                  </FormLabel>
-                                </FormItem>
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal cursor-pointer">
+                                      {tech.label}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                    <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                       {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
                       {!loading && <ArrowRight className="ml-2" />}
