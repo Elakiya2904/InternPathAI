@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BrainCircuit, Sparkles } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Sparkles, ListTodo } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
