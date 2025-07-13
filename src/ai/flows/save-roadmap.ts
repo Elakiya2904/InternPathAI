@@ -12,29 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK inside the flow's module scope.
-// This ensures it's initialized only when this server-side module is loaded.
-let db: admin.firestore.Firestore;
-
-try {
-  const serviceAccountValue = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (serviceAccountValue) {
-    const serviceAccount = JSON.parse(serviceAccountValue);
-    if (admin.apps.length === 0) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      });
-    }
-    db = admin.firestore();
-  } else {
-    console.warn("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT is not set.");
-  }
-} catch (error) {
-  console.error("Error initializing Firebase Admin SDK:", error);
-}
-
-
 const RoadmapTaskSchema = z.object({
   subTaskTitle: z.string(),
   description: z.string(),
@@ -68,23 +45,37 @@ const saveRoadmapFlow = ai.defineFlow(
     outputSchema: z.object({ success: z.boolean(), docId: z.string() }),
   },
   async (input) => {
-    if (!db) {
-       throw new Error("Firestore is not initialized. Please ensure FIREBASE_SERVICE_ACCOUNT is set correctly in your environment variables.");
+    let db: admin.firestore.Firestore;
+
+    try {
+      if (admin.apps.length === 0) {
+          const serviceAccountValue = process.env.FIREBASE_SERVICE_ACCOUNT;
+          if (!serviceAccountValue) {
+            throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable not set.");
+          }
+          const serviceAccount = JSON.parse(serviceAccountValue);
+          admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+          });
+      }
+      db = admin.firestore();
+    } catch (error) {
+       console.error("Error initializing Firebase Admin SDK:", error);
+       throw new Error("Failed to initialize Firestore. Please check your Firebase service account credentials.");
     }
+
     try {
       const userRoadmapsCollection = db.collection('users').doc(input.userId).collection('roadmaps');
       
-      // Firestore Admin SDK adds a new document and returns a reference
       const newRoadmapRef = await userRoadmapsCollection.add({
         ...input,
-        createdAt: new Date(), // Use a standard Date object for the timestamp
+        createdAt: new Date(), 
       });
 
       return { success: true, docId: newRoadmapRef.id };
     } catch (error) {
       console.error("Error saving roadmap to Firestore:", error);
-      // We can't easily throw an HTTP error here, so we return a failure state.
-      // The client-side will need to handle this.
       return { success: false, docId: '' };
     }
   }
