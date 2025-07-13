@@ -1,9 +1,10 @@
 
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, BrainCircuit, Sparkles, ListTodo } from 'lucide-react';
+import { ArrowRight, BrainCircuit, Sparkles, ListTodo, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
@@ -21,13 +22,19 @@ export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (loading) {
-    return <div>Loading...</div>; // Or a proper loading spinner
-  }
-  
-  if (user) {
-    router.push('/dashboard');
-    return null; // or a loading spinner
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+
+  if (loading || user) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="w-16 h-16 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
