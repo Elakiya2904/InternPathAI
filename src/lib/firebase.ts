@@ -4,39 +4,18 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyCPWJER9xur5sX-IjUayCmMt-FRQOx0Tmo",
+  authDomain: "intern-fd1b0.firebaseapp.com",
+  projectId: "intern-fd1b0",
+  storageBucket: "intern-fd1b0.firebasestorage.app",
+  messagingSenderId: "532208869595",
+  appId: "1:532208869595:web:a0160c40c6de4edb47ecfe",
+  measurementId: "G-MHM5Z0NXLK"
 };
 
-function initializeFirebase() {
-  const requiredEnv = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
-  ];
-
-  const missingEnv = requiredEnv.filter(key => !(process.env[key]));
-
-  if (missingEnv.length > 0) {
-    console.error(`Firebase configuration is missing the following environment variables:\n${missingEnv.join('\n')}`);
-    console.error("Please add them to your .env file and restart the development server.");
-    // Return null or mock objects if you want the app to not crash
-    return { app: null, auth: null, db: null };
-  }
-  
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  return { app, auth, db };
-}
-
-const { app, auth, db } = initializeFirebase();
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 export { app, auth, db };
