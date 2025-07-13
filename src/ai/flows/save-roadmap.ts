@@ -13,7 +13,7 @@ import { z } from 'genkit';
 import { getFirestore } from 'firebase-admin/firestore';
 import { app } from '@/lib/firebase-admin';
 
-const db = getFirestore(app);
+const db = getFirestore(app());
 
 const RoadmapTaskSchema = z.object({
   subTaskTitle: z.string(),
