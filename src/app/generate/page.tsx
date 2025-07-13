@@ -303,11 +303,11 @@ export default function GenerateRoadmapPage() {
             description: "Your roadmap has been saved to your dashboard.",
         });
         router.push('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to save roadmap: ", error);
         toast({
             title: "Error Saving Roadmap",
-            description: "There was a problem saving your roadmap. Please try again.",
+            description: error.message,
             variant: "destructive",
         });
     } finally {
@@ -450,7 +450,7 @@ export default function GenerateRoadmapPage() {
                 </div>
                 <Button onClick={handleSaveRoadmap} disabled={saving} size="lg">
                     {saving ? <Loader2 className="animate-spin" /> : <Save />}
-                    Save Roadmap
+                    {saving ? "Saving..." : "Save Roadmap"}
                 </Button>
              </div>
 
