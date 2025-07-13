@@ -10,8 +10,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirestore } from 'firebase-admin/firestore';
+import { app } from '@/lib/firebase-admin';
+
+const db = getFirestore(app);
 
 const RoadmapTaskSchema = z.object({
   subTaskTitle: z.string(),
@@ -47,12 +49,12 @@ const saveRoadmapFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const userRoadmapsCollection = collection(db, 'users', input.userId, 'roadmaps');
-      const newRoadmapRef = doc(userRoadmapsCollection);
+      const userRoadmapsCollection = db.collection('users').doc(input.userId).collection('roadmaps');
       
-      await setDoc(newRoadmapRef, {
+      // Firestore Admin SDK adds a new document and returns a reference
+      const newRoadmapRef = await userRoadmapsCollection.add({
         ...input,
-        createdAt: serverTimestamp(),
+        createdAt: new Date(), // Use a standard Date object for the timestamp
       });
 
       return { success: true, docId: newRoadmapRef.id };
