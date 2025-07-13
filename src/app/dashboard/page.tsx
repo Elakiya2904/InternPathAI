@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,6 +113,10 @@ export default function DashboardPage() {
           });
           setSavedRoadmaps(roadmaps.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
           setLoading(false);
+      }, (error) => {
+          console.error("Error fetching roadmaps:", error);
+          setSavedRoadmaps([]);
+          setLoading(false);
       });
       
       return () => unsubscribe();
@@ -151,7 +155,7 @@ export default function DashboardPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">No Saved Roadmaps Yet</CardTitle>
                     <CardDescription className="text-lg">
-                        You haven't saved any roadmaps. Click the button above to generate your first one!
+                        You haven't generated any roadmaps. Click the button above to generate your first one!
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
