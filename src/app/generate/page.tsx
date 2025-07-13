@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, Save, RotateCcw } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
@@ -62,11 +62,11 @@ const knownTechnologies = [
 ];
 
 type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: { name: string }; };
+
 type StoredRoadmap = {
     roadmapData: { roadmap: RoadmapStepWithCompletion[], advice: string };
     userInput: UserInput;
-}
-
+};
 
 const RoadmapDetailCard = ({ 
   detail,
@@ -181,6 +181,14 @@ export default function GenerateRoadmapPage() {
   
   const LOCAL_STORAGE_KEY = 'internpath-roadmap';
 
+  const form = useForm<UserInput>({
+    resolver: zodResolver(userInputSchema),
+    defaultValues: {
+      fieldOfInterest: [],
+      technologiesKnown: [],
+    },
+  });
+
   useEffect(() => {
     if (user) {
       const savedRoadmap = localStorage.getItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
@@ -204,7 +212,6 @@ export default function GenerateRoadmapPage() {
             roadmapData,
             userInput,
         };
-        // We need to remove the File object from the certificate before storing
         const storableRoadmapData = {
             ...roadmapData,
             roadmap: roadmapData.roadmap.map(step => {
@@ -227,14 +234,6 @@ export default function GenerateRoadmapPage() {
       { value: 'Data Science', label: 'Data Science' },
       { value: 'UI/UX Design', label: 'UI/UX Design' },
   ];
-
-  const form = useForm<UserInput>({
-    resolver: zodResolver(userInputSchema),
-    defaultValues: {
-      fieldOfInterest: [],
-      technologiesKnown: [],
-    },
-  });
 
   const handleGenerateChecklist = async (data: UserInput) => {
     setLoading(true);
@@ -495,7 +494,7 @@ export default function GenerateRoadmapPage() {
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl flex items-center gap-3"><Briefcase className="text-primary" /> Internship Recommendations</CardTitle>
                     <CardDescription className="text-lg text-muted-foreground">Check out these opportunities that align with your skills.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent>
                     <div className="grid md:grid-cols-2 gap-4">
                         {internships.map(internship => (
