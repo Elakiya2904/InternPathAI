@@ -195,14 +195,10 @@ const RoadmapDetailCard = ({
 export default function GenerateRoadmapPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
+  const [step, setStep] = useState<'input' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
-  const [skillsData, setSkillsData] = useState<GenerateSkillsChecklistOutput | null>(null);
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [additionalSkill, setAdditionalSkill] = useState('');
-  const [additionalSkillsList, setAdditionalSkillsList] = useState<string[]>([]);
   
   const { toast } = useToast();
   
@@ -262,52 +258,21 @@ export default function GenerateRoadmapPage() {
       { value: 'UI/UX Design', label: 'UI/UX Design' },
   ];
 
-  const handleGenerateChecklist = async (data: UserInput) => {
+  const handleGenerateRoadmap = async (data: UserInput) => {
     setLoading(true);
     setUserInput(data);
     try {
-      const result = await generateSkillsChecklist({
+      // Step 1: Generate skills checklist
+      const skillsResult = await generateSkillsChecklist({
           fieldOfInterest: data.fieldOfInterest[0],
           technologiesKnown: data.technologiesKnown.join(', ')
       });
-      setSkillsData(result);
-      setSelectedSkills(result.skillsChecklist);
-      setStep('checklist');
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate skills checklist. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleAddAdditionalSkill = () => {
-    if (additionalSkill.trim() && !additionalSkillsList.includes(additionalSkill.trim())) {
-      setAdditionalSkillsList([...additionalSkillsList, additionalSkill.trim()]);
-      setAdditionalSkill('');
-    }
-  };
 
-  const handleGenerateRoadmap = async () => {
-    if (selectedSkills.length === 0 && additionalSkillsList.length === 0) {
-      toast({
-        title: 'No Skills Selected',
-        description: 'Please select or add at least one skill to generate a roadmap.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setLoading(true);
-    try {
-      if (!userInput) throw new Error('User input is missing');
+      // Step 2: Immediately generate roadmap with the skills from step 1
       const roadmapResult = await generatePersonalizedRoadmap({
-        fieldOfInterest: userInput.fieldOfInterest[0],
-        selectedSkills: selectedSkills,
-        additionalSkills: additionalSkillsList,
+        fieldOfInterest: data.fieldOfInterest[0],
+        selectedSkills: skillsResult.skillsChecklist,
+        additionalSkills: [], // No additional skills since we removed that step
       });
 
       const roadmapWithCompletion = roadmapResult.roadmap.map(step => ({
@@ -322,20 +287,14 @@ export default function GenerateRoadmapPage() {
       console.error(error);
       toast({
         title: 'Error',
-        description: 'Failed to generate roadmap. Please try again.',
+        description: 'Failed to generate your roadmap. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setLoading(false);
     }
   };
-
-  const handleSkillToggle = (skill: string) => {
-    setSelectedSkills(prev =>
-      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
-    );
-  };
-
+  
   const handleCompleteStep = (index: number, file: File) => {
       if (roadmapData) {
         const newRoadmap = [...roadmapData.roadmap];
@@ -353,7 +312,6 @@ export default function GenerateRoadmapPage() {
     setStep('input');
     setRoadmapData(null);
     setUserInput(null);
-    setSkillsData(null);
     form.reset();
   };
 
@@ -371,7 +329,7 @@ export default function GenerateRoadmapPage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(handleGenerateRoadmap)} className="space-y-8">
                   <FormField
                     control={form.control}
                     name="fieldOfInterest"
@@ -437,75 +395,12 @@ export default function GenerateRoadmapPage() {
                     )}
                   />
                    <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
-                      {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
+                      {loading ? <Loader2 className="animate-spin" /> : "Generate My Roadmap"}
                       {!loading && <ArrowRight className="ml-2" />}
                     </Button>
                 </form>
               </Form>
             </CardContent>
-          </Card>
-        )}
-
-        {step === 'checklist' && skillsData && (
-          <Card className="shadow-2xl shadow-primary/10 border-2">
-            <CardHeader>
-              <CardTitle className="font-headline text-3xl">Customize Your Skillset</CardTitle>
-              <CardDescription className="text-lg text-muted-foreground">Select the skills you want to focus on. We've suggested some based on your interests.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div>
-                <h3 className="font-bold text-lg mb-4 text-primary">Suggested Skills</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {skillsData.skillsChecklist.map((skill) => (
-                    <div key={skill} className="flex items-center space-x-3 p-3 bg-card border-2 border-foreground/30 rounded-lg transition-all has-[:checked]:bg-primary/10 has-[:checked]:ring-2 has-[:checked]:ring-primary">
-                      <Checkbox
-                        id={skill}
-                        checked={selectedSkills.includes(skill)}
-                        onCheckedChange={() => handleSkillToggle(skill)}
-                        className="w-5 h-5"
-                      />
-                      <label
-                        htmlFor={skill}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
-                      >
-                        {skill}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="font-bold text-lg mb-2 text-primary">Add More Skills</h3>
-                 <div className="flex gap-2">
-                    <Input
-                      value={additionalSkill}
-                      onChange={(e) => setAdditionalSkill(e.target.value)}
-                      placeholder="e.g., Docker, Kubernetes"
-                      onKeyDown={(e) => {if (e.key === 'Enter') { e.preventDefault(); handleAddAdditionalSkill();}}}
-                      className="py-6 text-base"
-                    />
-                    <Button onClick={handleAddAdditionalSkill} variant="outline" size="lg"><PlusCircle className="w-5 h-5"/></Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-4">
-                      {additionalSkillsList.map(skill => (
-                        <Badge key={skill} variant="secondary" className="flex items-center text-base py-1 px-3">
-                            {skill}
-                            <button onClick={() => setAdditionalSkillsList(prev => prev.filter(s => s !== skill))} className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                              <XIcon className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                            </button>
-                        </Badge>
-                      ))}
-                  </div>
-              </div>
-
-            </CardContent>
-            <CardFooter>
-               <Button onClick={handleGenerateRoadmap} disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
-                  {loading ? <Loader2 className="animate-spin" /> : "Create My Personalized Roadmap"}
-                   {!loading && <Wand2 className="ml-2" />}
-                </Button>
-            </CardFooter>
           </Card>
         )}
 
