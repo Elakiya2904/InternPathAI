@@ -35,6 +35,6 @@ export async function saveRoadmap(input: SaveRoadmapInput): Promise<{ success: b
         return { success: true, id: docRef.id };
     } catch (e) {
         console.error("Error adding document: ", e);
-        throw new Error("Failed to save roadmap to the database.");
+        throw new Error("Failed to save roadmap. This is likely due to Firestore security rules. Please ensure you have deployed the firestore.rules file to your Firebase project.");
     }
 }
