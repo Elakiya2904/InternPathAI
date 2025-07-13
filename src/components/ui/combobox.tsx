@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
+  CommandGroup,
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
@@ -36,6 +36,22 @@ export function Combobox({
     inputPlaceholder = "Search option...",
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const [inputValue, setInputValue] = React.useState(value || "");
+
+   React.useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        const matchingOption = options.find(option => option.label.toLowerCase() === inputValue.toLowerCase());
+        if (!matchingOption) {
+            onChange(inputValue);
+        }
+        setOpen(false);
+    }
+  };
+
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -47,7 +63,7 @@ export function Combobox({
           className="w-full justify-between py-6 text-base"
         >
           {value
-            ? options.find((option) => option.value === value)?.label
+            ? options.find((option) => option.value === value)?.label || value
             : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -55,25 +71,30 @@ export function Combobox({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command
             filter={(value, search) => {
-              if (value.toLowerCase().includes(search.toLowerCase())) return 1
-              return 0
+              const option = options.find(o => o.value === value);
+              if (option && option.label.toLowerCase().includes(search.toLowerCase())) return 1;
+              return 0;
             }}
         >
           <CommandInput 
             placeholder={inputPlaceholder}
-            onValueChange={(currentValue) => {
-                 onChange(currentValue);
-            }}
+            value={inputValue}
+            onValueChange={setInputValue}
+            onKeyDown={handleKeyDown}
           />
           <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
+            <CommandEmpty>
+                No option found. Press Enter to add "{inputValue}".
+            </CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   value={option.value}
                   onSelect={(currentValue) => {
-                    onChange(currentValue === value ? "" : currentValue)
+                    const newValue = currentValue === value ? "" : currentValue;
+                    onChange(newValue)
+                    setInputValue(newValue)
                     setOpen(false)
                   }}
                 >
