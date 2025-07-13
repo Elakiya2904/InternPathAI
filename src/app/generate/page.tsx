@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 
 const userInputSchema = z.object({
+  fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
   technologiesKnown: z.array(z.string()).min(1, 'Please select at least one technology.'),
 });
 
@@ -217,6 +218,7 @@ export default function GenerateRoadmapPage() {
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
     defaultValues: {
+      fieldOfInterest: [],
       technologiesKnown: [],
     },
   });
@@ -281,11 +283,12 @@ export default function GenerateRoadmapPage() {
     setUserInput(data);
     try {
       const result = await generateSkillsChecklist({
-        fieldOfInterest: "Technology", // Use a generic field to get a broad list
+        fieldOfInterest: data.fieldOfInterest[0],
         technologiesKnown: data.technologiesKnown.join(', '),
       });
       setSkillsChecklist(result.skillsChecklist);
       setSelectedSkills(result.skillsChecklist);
+      contextForm.setValue('fieldOfInterest', data.fieldOfInterest);
       setStep('checklist');
     } catch (error) {
       console.error(error);
@@ -386,6 +389,25 @@ export default function GenerateRoadmapPage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleGenerateChecklist)} className="space-y-8">
+                  <FormField
+                      control={form.control}
+                      name="fieldOfInterest"
+                      render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                          <FormLabel className="text-base font-semibold">What's your primary field of interest?</FormLabel>
+                          <MultiSelectCombobox
+                              options={recommendedFields}
+                              selected={field.value}
+                              onChange={field.onChange}
+                              placeholder="Select or type a field..."
+                              inputPlaceholder="Search or add a new field..."
+                              mode="single"
+                          />
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="technologiesKnown"
