@@ -2,11 +2,11 @@
 'use server';
 
 /**
- * @fileOverview A server action to save a user's generated roadmap to Firestore using the Firebase Admin SDK.
+ * @fileOverview A server action to save a user's generated roadmap to Firestore.
  */
 
-import { getAdminApp } from '@/lib/firebase-admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { type GeneratePersonalizedRoadmapOutput } from './generate-personalized-roadmap';
 
 export interface SaveRoadmapInput {
@@ -22,24 +22,20 @@ export async function saveRoadmap(input: SaveRoadmapInput): Promise<{ success: b
     }
 
     try {
-        const adminApp = getAdminApp();
-        const db = getFirestore(adminApp);
+        const userRoadmapsCollection = collection(db, 'users', input.userId, 'roadmaps');
         
-        const userRoadmapsCollection = db.collection('users').doc(input.userId).collection('roadmaps');
-        
-        const docRef = await userRoadmapsCollection.add({
+        const docRef = await addDoc(userRoadmapsCollection, {
             fieldOfInterest: input.fieldOfInterest,
             roadmap: input.roadmap,
             advice: input.advice,
             createdAt: new Date(),
         });
         
-        console.log("Admin SDK: Document written with ID: ", docRef.id);
+        console.log("Document written with ID: ", docRef.id);
         return { success: true, id: docRef.id };
     } catch (e: any) {
-        console.error("Error adding document with Admin SDK: ", e);
-        // Log the detailed error message from Firebase
-        const errorMessage = e.message || 'An unknown error occurred.';
-        throw new Error(`Failed to save roadmap via Admin SDK. This might be a server configuration issue. Details: ${errorMessage}`);
+        console.error("Error adding document: ", e);
+        // This error is more helpful for the user to understand the likely cause.
+        throw new Error("Failed to save roadmap. This is likely due to Firestore security rules. Please ensure you have deployed the firestore.rules file to your Firebase project.");
     }
 }
