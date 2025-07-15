@@ -49,8 +49,17 @@ Follow these instructions to get the project running on your local machine for d
     npm install
     ```
 
-3.  **Set up environment variables:**
-    Create a file named `.env` in the root of the project and add your Google AI API key. This is required for Genkit to function.
+3.  **Set up environment variables (Optional):**
+
+    This project can be run **without an API key**. If no key is provided, the application will use mocked AI responses, allowing you to work on the UI and other features without needing access to the Google AI service.
+
+    To enable the full AI capabilities, you will need a Google AI API key.
+    
+    Create a file named `.env` in the root of the project by copying the example file:
+    ```bash
+    cp .env.example .env
+    ```
+    Then, add your Google AI API key to the `.env` file.
     ```
     GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
     ```

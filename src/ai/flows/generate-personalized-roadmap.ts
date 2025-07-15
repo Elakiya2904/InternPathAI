@@ -45,7 +45,32 @@ export type GeneratePersonalizedRoadmapOutput = z.infer<typeof GeneratePersonali
 export async function generatePersonalizedRoadmap(
   input: GeneratePersonalizedRoadmapInput
 ): Promise<GeneratePersonalizedRoadmapOutput> {
-  return generatePersonalizedRoadmapFlow(input);
+    // If no API key is provided, return mock data.
+    if (!process.env.GOOGLE_API_KEY) {
+        console.log("No GOOGLE_API_KEY found, returning mock data for personalized roadmap.");
+        // Simulate a longer delay for the main generation
+        await new Promise(resolve => setTimeout(resolve, 2500));
+
+        const mockRoadmap = input.selectedSkills.map(skill => ({
+            title: skill,
+            description: `This step focuses on learning ${skill}. It is a crucial skill for any ${input.fieldOfInterest}.`,
+            icon: 'Code',
+            tasks: [
+                { subTaskTitle: `Learn the basics of ${skill}`, description: 'Understand the core concepts and syntax.' },
+                { subTaskTitle: `Build a simple project with ${skill}`, description: 'Apply your knowledge to a practical example.' },
+                { subTaskTitle: 'Explore advanced topics', description: `Dive deeper into ${skill} to become proficient.` },
+            ],
+            resources: [`Official ${skill} Documentation`, 'freeCodeCamp on YouTube', 'MDN Web Docs'],
+            project: `Create a simple portfolio page using ${skill} and other technologies you've learned.`,
+        }));
+
+        return {
+            roadmap: mockRoadmap,
+            advice: `This is a mocked response. To get a real AI-generated roadmap, please add your Google AI API key to the .env file. \n\nBased on your interest in **${input.fieldOfInterest}**, focusing on these skills is a great start. Consistency is key. Try to code a little bit every day. Build projects, even small ones, to solidify your understanding. Network with other developers and don't be afraid to ask questions. Good luck on your journey!`,
+        };
+    }
+    
+    return generatePersonalizedRoadmapFlow(input);
 }
 
 const prompt = ai.definePrompt({
@@ -84,5 +109,3 @@ const generatePersonalizedRoadmapFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

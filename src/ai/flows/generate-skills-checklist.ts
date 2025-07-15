@@ -36,6 +36,26 @@ export type GenerateSkillsChecklistOutput = z.infer<
 export async function generateSkillsChecklist(
   input: GenerateSkillsChecklistInput
 ): Promise<GenerateSkillsChecklistOutput> {
+  // If no API key is provided, return mock data.
+  if (!process.env.GOOGLE_API_KEY) {
+    console.log("No GOOGLE_API_KEY found, returning mock data for skills checklist.");
+    // Simulate a short delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const knownSkills = input.technologiesKnown.split(',').map(s => s.trim()).filter(Boolean);
+    const mockSkills: Record<string, string[]> = {
+      'frontend development': ['HTML', 'CSS', 'JavaScript', 'React', 'TypeScript', 'Tailwind CSS', 'Next.js', 'Webpack'],
+      'full stack development': ['HTML', 'CSS', 'JavaScript', 'Node.js', 'Express', 'SQL', 'MongoDB', 'React', 'Docker'],
+      'ai/ml': ['Python', 'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy', 'Jupyter Notebooks', 'Cloud AI Platform'],
+    };
+    const fieldKey = input.fieldOfInterest.toLowerCase();
+    const recommendedSkills = mockSkills[fieldKey] || mockSkills['frontend development'];
+
+    return {
+      skillsChecklist: [...new Set([...knownSkills, ...recommendedSkills])]
+    };
+  }
+  
   return generateSkillsChecklistFlow(input);
 }
 
