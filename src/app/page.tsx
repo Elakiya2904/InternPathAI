@@ -62,7 +62,7 @@ export default function HomePage() {
             <div className="container mx-auto">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                        <Image src="https://placehold.co/600x400" data-ai-hint="learning path" alt="Roadmap visualization" width={600} height={400} className="rounded-lg shadow-2xl" />
+                        <Image src="https://placehold.co/600x400.png" data-ai-hint="learning path" alt="Roadmap visualization" width={600} height={400} className="rounded-lg shadow-2xl" />
                     </div>
                     <div>
                         <h2 className="font-headline text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
