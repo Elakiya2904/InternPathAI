@@ -29,7 +29,7 @@ import { LoginDialog } from '@/components/login-dialog';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
-  technologiesKnown: z.array(z.string()),
+  technologiesKnown: z.array(z.string().min(1, "Technology name can't be empty.")),
 });
 
 const roadmapContextSchema = z.object({
@@ -625,3 +625,4 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
+
