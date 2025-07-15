@@ -6,14 +6,14 @@ import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
-import { generateSkillsChecklist, type GenerateSkillsChecklistOutput } from '@/ai/flows/generate-skills-checklist';
+import { generateSkillsChecklist } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, XIcon, CheckCircle, Upload, Lock, RotateCcw } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, CheckCircle, Upload, Lock, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
@@ -23,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
+import { LoginDialog } from '@/components/login-dialog';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
@@ -115,6 +116,7 @@ const RoadmapDetailCard = ({
 }) => {
   const Icon = iconMap[detail.icon] || BrainCircuit;
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const { user } = useAuth();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -129,16 +131,16 @@ const RoadmapDetailCard = ({
   };
 
   return (
-    <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card" disabled={isLocked}>
-      <AccordionTrigger className="p-6 text-left hover:no-underline" disabled={isLocked}>
+    <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card" disabled={isLocked && !!user}>
+      <AccordionTrigger className="p-6 text-left hover:no-underline" disabled={isLocked && !!user}>
         <div className="w-full">
             <CardTitle className="text-2xl flex items-center gap-3">
-              {isLocked ? <Lock className="w-8 h-8 text-muted-foreground" /> : <Icon className="w-8 h-8 text-primary" />}
+              {(isLocked && !!user) ? <Lock className="w-8 h-8 text-muted-foreground" /> : <Icon className="w-8 h-8 text-primary" />}
               {detail.title}
               {detail.isCompleted && <CheckCircle className="w-7 h-7 text-green-500" />}
             </CardTitle>
             <CardDescription className="text-base mt-2">{detail.description}</CardDescription>
-            <Progress value={detail.isCompleted ? 100 : 0} className="mt-4 h-2" />
+            {user && <Progress value={detail.isCompleted ? 100 : 0} className="mt-4 h-2" />}
         </div>
       </AccordionTrigger>
       <AccordionContent>
@@ -174,25 +176,29 @@ const RoadmapDetailCard = ({
             <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Lightbulb /> Project Idea</h4>
             <p className="text-muted-foreground p-4 bg-secondary/50 rounded-md border border-border">{detail.project}</p>
           </div>
-          <Separator />
-          {!detail.isCompleted && (
-             <div>
-                <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Upload /> Complete Step</h4>
-                <div className="p-4 bg-secondary/50 rounded-md border border-border space-y-4">
-                  <p className="text-muted-foreground">Upload your certificate of completion to mark this step as done.</p>
-                  <Input type="file" onChange={handleFileChange} className="max-w-xs" />
-                   <Button onClick={handleComplete} disabled={!certificateFile}>Mark as Complete</Button>
+          {!!user && (
+            <>
+            <Separator />
+            {!detail.isCompleted && (
+                <div>
+                    <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Upload /> Complete Step</h4>
+                    <div className="p-4 bg-secondary/50 rounded-md border border-border space-y-4">
+                    <p className="text-muted-foreground">Upload your certificate of completion to mark this step as done.</p>
+                    <Input type="file" onChange={handleFileChange} className="max-w-xs" />
+                    <Button onClick={handleComplete} disabled={!certificateFile}>Mark as Complete</Button>
+                    </div>
                 </div>
-             </div>
+            )}
+            {detail.isCompleted && detail.certificate && (
+                <div>
+                <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-green-500"><CheckCircle /> Step Completed</h4>
+                <div className="p-4 bg-green-500/10 rounded-md border border-green-500/30">
+                    <p className="font-semibold text-green-400">Certificate Uploaded: {detail.certificate.name}</p>
+                </div>
+                </div>
+            )}
+            </>
           )}
-           {detail.isCompleted && detail.certificate && (
-            <div>
-              <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-green-500"><CheckCircle /> Step Completed</h4>
-               <div className="p-4 bg-green-500/10 rounded-md border border-green-500/30">
-                  <p className="font-semibold text-green-400">Certificate Uploaded: {detail.certificate.name}</p>
-               </div>
-            </div>
-           )}
         </CardContent>
       </AccordionContent>
     </AccordionItem>
@@ -201,7 +207,6 @@ const RoadmapDetailCard = ({
 
 export default function GenerateRoadmapPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [step, setStep] = useState<'input' | 'checklist' | 'roadmap'>('input');
   const [loading, setLoading] = useState(false);
   const [skillsChecklist, setSkillsChecklist] = useState<string[]>([]);
@@ -210,10 +215,12 @@ export default function GenerateRoadmapPage() {
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [roadmapContext, setRoadmapContext] = useState<RoadmapContext | null>(null);
+  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const { toast } = useToast();
   
   const LOCAL_STORAGE_KEY = 'internpath-roadmap';
+  const router = useRouter();
 
   const form = useForm<UserInput>({
     resolver: zodResolver(userInputSchema),
@@ -231,27 +238,31 @@ export default function GenerateRoadmapPage() {
           fieldOfInterest: [],
       },
   });
+  
+  const getStoredData = () => {
+    const key = user ? `${LOCAL_STORAGE_KEY}-${user.uid}` : LOCAL_STORAGE_KEY;
+    const savedRoadmap = localStorage.getItem(key);
+    if (savedRoadmap) {
+        try {
+            const { roadmapData: loadedData, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
+            setRoadmapData(loadedData);
+            setUserInput(loadedInput);
+            setRoadmapContext(loadedContext);
+            setStep('roadmap');
+        } catch (error) {
+            console.error("Failed to parse saved roadmap from localStorage", error);
+            localStorage.removeItem(key);
+        }
+    }
+  }
 
   useEffect(() => {
-    if (user) {
-      const savedRoadmap = localStorage.getItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
-      if (savedRoadmap) {
-        try {
-          const { roadmapData: loadedData, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
-          setRoadmapData(loadedData);
-          setUserInput(loadedInput);
-          setRoadmapContext(loadedContext);
-          setStep('roadmap');
-        } catch (error) {
-          console.error("Failed to parse saved roadmap from localStorage", error);
-          localStorage.removeItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
-        }
-      }
-    }
+    getStoredData();
   }, [user]);
 
   useEffect(() => {
-    if (user && roadmapData && userInput && roadmapContext) {
+    if (roadmapData && userInput && roadmapContext) {
+        const key = user ? `${LOCAL_STORAGE_KEY}-${user.uid}` : LOCAL_STORAGE_KEY;
         const dataToStore: StoredRoadmap = {
             roadmapData,
             userInput,
@@ -266,7 +277,7 @@ export default function GenerateRoadmapPage() {
                 return step;
             })
         };
-        localStorage.setItem(`${LOCAL_STORAGE_KEY}-${user.uid}`, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
+        localStorage.setItem(key, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
     }
   }, [roadmapData, userInput, roadmapContext, user]);
 
@@ -321,34 +332,42 @@ export default function GenerateRoadmapPage() {
     );
   };
   
-  const handleGenerateRoadmap = async (data: RoadmapContext) => {
-    if (!userInput) return;
-    setLoading(true);
-    setRoadmapContext(data);
-    try {
-      const result = await generatePersonalizedRoadmap({
-        fieldOfInterest: data.fieldOfInterest[0],
-        selectedSkills,
-        additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)),
-      });
+  const performRoadmapGeneration = async (data: RoadmapContext) => {
+      if (!userInput) return;
+      setLoading(true);
+      setRoadmapContext(data);
+      try {
+        const result = await generatePersonalizedRoadmap({
+          fieldOfInterest: data.fieldOfInterest[0],
+          selectedSkills,
+          additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)),
+        });
 
-      const roadmapWithCompletion = result.roadmap.map(step => ({
-        ...step,
-        isCompleted: false,
-        certificate: undefined,
-      }));
-      setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
-      
-      setStep('roadmap');
-    } catch (error) {
-      console.error(error);
-       toast({
-        title: 'Error',
-        description: 'Failed to generate your roadmap. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+        const roadmapWithCompletion = result.roadmap.map(step => ({
+          ...step,
+          isCompleted: false,
+          certificate: undefined,
+        }));
+        setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
+        
+        setStep('roadmap');
+      } catch (error) {
+        console.error(error);
+         toast({
+          title: 'Error',
+          description: 'Failed to generate your roadmap. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+  }
+  
+  const handleGenerateRoadmap = async (data: RoadmapContext) => {
+    if (!user) {
+        setLoginDialogOpen(true);
+    } else {
+        performRoadmapGeneration(data);
     }
   };
 
@@ -363,9 +382,9 @@ export default function GenerateRoadmapPage() {
   };
   
   const handleStartOver = () => {
-    if(user) {
-        localStorage.removeItem(`${LOCAL_STORAGE_KEY}-${user.uid}`);
-    }
+    const key = user ? `${LOCAL_STORAGE_KEY}-${user.uid}` : LOCAL_STORAGE_KEY;
+    localStorage.removeItem(key);
+
     setStep('input');
     setRoadmapData(null);
     setUserInput(null);
@@ -379,6 +398,16 @@ export default function GenerateRoadmapPage() {
   return (
     <div className="flex-grow flex flex-col items-center p-4 sm:p-8">
       <div className="w-full max-w-4xl xl:max-w-5xl animate-in fade-in-50 duration-500">
+        <LoginDialog 
+          open={isLoginDialogOpen} 
+          onOpenChange={setLoginDialogOpen}
+          onSuccess={() => {
+              setLoginDialogOpen(false);
+              // @ts-ignore
+              contextForm.handleSubmit(performRoadmapGeneration)();
+          }}
+        />
+
         {step === 'input' && (
           <Card className="shadow-2xl shadow-primary/10 border-2">
             <CardHeader className="text-center">
@@ -566,7 +595,7 @@ export default function GenerateRoadmapPage() {
                       key={index}
                       detail={detail}
                       onComplete={handleCompleteStep}
-                      isLocked={index > 0 && !roadmapData.roadmap[index - 1].isCompleted}
+                      isLocked={index > 0 && !!user && !roadmapData.roadmap[index - 1].isCompleted}
                       index={index}
                   />
                 ))}
