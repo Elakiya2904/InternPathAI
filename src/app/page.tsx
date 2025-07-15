@@ -59,37 +59,32 @@ export default function HomePage() {
         </section>
 
         <section className="py-20 px-4 bg-secondary/30">
-            <div className="container mx-auto">
-                <div className="grid md:grid-cols-2 gap-12 items-center">
-                    <div>
-                        <Image src="https://placehold.co/600x400.png" data-ai-hint="learning path" alt="Roadmap visualization" width={600} height={400} className="rounded-lg shadow-2xl" />
-                    </div>
-                    <div>
-                        <h2 className="font-headline text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-                        <ul className="space-y-6 text-lg">
-                            <li className="flex items-start gap-4">
-                                <div className="text-2xl font-bold text-primary">1.</div>
-                                <div>
-                                    <h3 className="font-bold">Tell Us Your Goal</h3>
-                                    <p className="text-muted-foreground">Specify your field of interest (e.g., Frontend, AI/ML) and the technologies you already know.</p>
-                                </div>
-                            </li>
-                             <li className="flex items-start gap-4">
-                                <div className="text-2xl font-bold text-primary">2.</div>
-                                <div>
-                                    <h3 className="font-bold">Get a Custom Plan</h3>
-                                    <p className="text-muted-foreground">Our AI analyzes your profile and generates a unique learning path with specific tasks, resources, and projects.</p>
-                                </div>
-                            </li>
-                             <li className="flex items-start gap-4">
-                                <div className="text-2xl font-bold text-primary">3.</div>
-                                <div>
-                                    <h3 className="font-bold">Track & Achieve</h3>
-                                    <p className="text-muted-foreground">Save your roadmap, track your progress, and get matched with relevant internship opportunities.</p>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+            <div className="container mx-auto max-w-3xl">
+                <div className="text-center md:text-left">
+                    <h2 className="font-headline text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+                    <ul className="space-y-6 text-lg">
+                        <li className="flex items-start gap-4">
+                            <div className="text-2xl font-bold text-primary">1.</div>
+                            <div>
+                                <h3 className="font-bold">Tell Us Your Goal</h3>
+                                <p className="text-muted-foreground">Specify your field of interest (e.g., Frontend, AI/ML) and the technologies you already know.</p>
+                            </div>
+                        </li>
+                         <li className="flex items-start gap-4">
+                            <div className="text-2xl font-bold text-primary">2.</div>
+                            <div>
+                                <h3 className="font-bold">Get a Custom Plan</h3>
+                                <p className="text-muted-foreground">Our AI analyzes your profile and generates a unique learning path with specific tasks, resources, and projects.</p>
+                            </div>
+                        </li>
+                         <li className="flex items-start gap-4">
+                            <div className="text-2xl font-bold text-primary">3.</div>
+                            <div>
+                                <h3 className="font-bold">Track & Achieve</h3>
+                                <p className="text-muted-foreground">Save your roadmap, track your progress, and get matched with relevant internship opportunities.</p>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </section>
