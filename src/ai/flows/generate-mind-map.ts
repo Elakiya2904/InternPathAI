@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   output: { schema: GenerateMindMapOutputSchema },
   prompt: `You are an expert at organizing information into structured mind maps. Your task is to take a field of interest and a list of related skills and convert them into a hierarchical mind map structure.
 
-The mind map should have a central root node representing the main field of interest. The skills should be organized logically as child nodes branching from the root or from other intermediate nodes if it makes sense (e.g., 'Frontend' -> 'HTML', 'Frontend' -> 'CSS').
+The mind map should have a central root node representing the main field of interest. The skills should be organized logically as child nodes from the root or from other intermediate nodes if it makes sense (e.g., 'Frontend' -> 'HTML', 'Frontend' -> 'CSS').
 
 Guidelines:
 1.  **Root Node:** Create a single root node for the 'fieldOfInterest'. Its ID should be a simplified version of the label (e.g., 'frontend-development').
@@ -91,10 +91,23 @@ const generateMindMapFlow = ai.defineFlow(
     inputSchema: GenerateMindMapInputSchema,
     outputSchema: GenerateMindMapOutputSchema,
   },
-  async input => {
-    const { output } = await prompt(input);
-    return output!;
+  async (input) => {
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (error: any) {
+        if (error.message.includes('503') && attempt < maxRetries) {
+          console.log(`Attempt ${attempt} failed with 503 error. Retrying in ${attempt}s...`);
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        } else {
+          console.error(`Flow failed after ${attempt} attempts.`, error);
+          throw error;
+        }
+      }
+    }
+    // This should be unreachable
+    throw new Error('Flow failed after maximum retries.');
   }
 );
-
-    

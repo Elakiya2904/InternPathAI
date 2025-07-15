@@ -1,4 +1,5 @@
-// 'use server';
+
+'use server';
 
 /**
  * @fileOverview Provides personalized career advice based on user inputs.
@@ -7,8 +8,6 @@
  * - PersonalizedAdviceInput - Input type for personalized advice.
  * - PersonalizedAdviceOutput - Output type for personalized advice.
  */
-
-'use server';
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
@@ -55,8 +54,23 @@ const getPersonalizedAdviceFlow = ai.defineFlow(
     inputSchema: PersonalizedAdviceInputSchema,
     outputSchema: PersonalizedAdviceOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (error: any) {
+        if (error.message.includes('503') && attempt < maxRetries) {
+          console.log(`Attempt ${attempt} failed with 503 error. Retrying in ${attempt}s...`);
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        } else {
+          console.error(`Flow failed after ${attempt} attempts.`, error);
+          throw error;
+        }
+      }
+    }
+    // This should be unreachable
+    throw new Error('Flow failed after maximum retries.');
   }
 );
