@@ -29,7 +29,7 @@ import { db } from '@/lib/firebase';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
-  technologiesKnown: z.array(z.string()).min(1, 'Please select at least one technology.'),
+  technologiesKnown: z.array(z.string()),
 });
 
 const roadmapContextSchema = z.object({
@@ -217,7 +217,6 @@ export default function GenerateRoadmapPage() {
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [roadmapContext, setRoadmapContext] = useState<RoadmapContext | null>(null);
-  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const { toast } = useToast();
   
@@ -231,8 +230,6 @@ export default function GenerateRoadmapPage() {
       technologiesKnown: [],
     },
   });
-
-  const fieldOfInterestValue = form.watch('fieldOfInterest');
 
   const contextForm = useForm<RoadmapContext>({
       resolver: zodResolver(roadmapContextSchema),
@@ -259,8 +256,12 @@ export default function GenerateRoadmapPage() {
   }
 
   useEffect(() => {
-    getStoredData();
-  }, [user]);
+    if (!user) {
+        router.push('/login');
+    } else {
+        getStoredData();
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (roadmapData && userInput && roadmapContext) {
@@ -282,30 +283,6 @@ export default function GenerateRoadmapPage() {
         localStorage.setItem(key, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
     }
   }, [roadmapData, userInput, roadmapContext, user]);
-
-  const saveRoadmapToFirestore = async (roadmapOutput: GeneratePersonalizedRoadmapOutput, field: string) => {
-    if (!user) return;
-    try {
-      const roadmapsRef = collection(db, 'users', user.uid, 'roadmaps');
-      await addDoc(roadmapsRef, {
-        ...roadmapOutput,
-        fieldOfInterest: field,
-        createdAt: serverTimestamp(),
-      });
-      toast({
-        title: 'Roadmap Saved!',
-        description: 'Your new roadmap has been saved to your dashboard.',
-      });
-    } catch (error) {
-      console.error('Error saving roadmap to Firestore:', error);
-      toast({
-        title: 'Save Failed',
-        description: 'Could not save your roadmap. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  };
-
 
   const recommendedFields = [
       { value: 'AI/ML', label: 'AI/ML' },
@@ -357,7 +334,7 @@ export default function GenerateRoadmapPage() {
     );
   };
   
-  const performRoadmapGeneration = async (data: RoadmapContext) => {
+  const handleGenerateRoadmap = async (data: RoadmapContext) => {
       if (!userInput) return;
       setLoading(true);
       setRoadmapContext(data);
@@ -367,18 +344,12 @@ export default function GenerateRoadmapPage() {
           selectedSkills,
           additionalSkills: skillsChecklist.filter(s => !selectedSkills.includes(s)),
         });
-
         const roadmapWithCompletion = result.roadmap.map(step => ({
           ...step,
           isCompleted: false,
           certificate: undefined,
         }));
         setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
-        
-        if (user) {
-            await saveRoadmapToFirestore(result, data.fieldOfInterest[0]);
-        }
-        
         setStep('roadmap');
       } catch (error) {
         console.error(error);
@@ -390,14 +361,6 @@ export default function GenerateRoadmapPage() {
       } finally {
         setLoading(false);
       }
-  }
-  
-  const handleGenerateRoadmap = async (data: RoadmapContext) => {
-    if (!user) {
-        setLoginDialogOpen(true);
-    } else {
-        performRoadmapGeneration(data);
-    }
   };
 
   const handleCompleteStep = (index: number, file: File) => {
@@ -427,16 +390,7 @@ export default function GenerateRoadmapPage() {
   return (
     <div className="flex-grow flex flex-col items-center p-4 sm:p-8">
       <div className="w-full max-w-4xl xl:max-w-5xl animate-in fade-in-50 duration-500">
-        <LoginDialog 
-          open={isLoginDialogOpen} 
-          onOpenChange={setLoginDialogOpen}
-          onSuccess={() => {
-              setLoginDialogOpen(false);
-              // @ts-ignore
-              contextForm.handleSubmit(performRoadmapGeneration)();
-          }}
-        />
-
+        
         {step === 'input' && (
           <Card className="shadow-2xl shadow-primary/10 border-2">
             <CardHeader className="text-center">
@@ -468,54 +422,52 @@ export default function GenerateRoadmapPage() {
                       )}
                   />
 
-                  {fieldOfInterestValue && fieldOfInterestValue.length > 0 && (
-                    <FormField
-                      control={form.control}
-                      name="technologiesKnown"
-                      render={({ field }) => (
-                        <FormItem className="animate-in fade-in-0 duration-500">
-                          <div className="mb-4">
-                            <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
-                            <FormDescription>Select all that apply.</FormDescription>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 p-4 border rounded-md">
-                            {knownTechnologies.map((tech) => (
-                              <FormField
-                                key={tech.value}
-                                control={form.control}
-                                name="technologiesKnown"
-                                render={({ field }) => (
-                                  <FormItem
-                                    key={tech.value}
-                                    className="flex flex-row items-start space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(tech.value)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, tech.value])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== tech.value
-                                                )
+                  <FormField
+                    control={form.control}
+                    name="technologiesKnown"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="mb-4">
+                          <FormLabel className="text-base font-semibold">What technologies do you already know?</FormLabel>
+                          <FormDescription>Select all that apply.</FormDescription>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 p-4 border rounded-md">
+                          {knownTechnologies.map((tech) => (
+                            <FormField
+                              key={tech.value}
+                              control={form.control}
+                              name="technologiesKnown"
+                              render={({ field }) => (
+                                <FormItem
+                                  key={tech.value}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(tech.value)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), tech.value])
+                                          : field.onChange(
+                                              (field.value || [])?.filter(
+                                                (value) => value !== tech.value
                                               )
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="font-normal cursor-pointer">
-                                      {tech.label}
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal cursor-pointer">
+                                    {tech.label}
+                                  </FormLabel>
+                                </FormItem>
+                              )}
+                            />
+                          ))}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                    <Button type="submit" disabled={loading} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg py-7">
                       {loading ? <Loader2 className="animate-spin" /> : "Generate Skills Checklist"}
                       {!loading && <ArrowRight className="ml-2" />}
@@ -545,7 +497,7 @@ export default function GenerateRoadmapPage() {
                             name="fieldOfInterest"
                             render={({ field }) => (
                             <FormItem className="flex flex-col">
-                                <FormLabel className="text-base font-semibold">What's your primary field of interest?</FormLabel>
+                                <FormLabel className="text-base font-semibold">Confirm your primary field of interest</FormLabel>
                                 <MultiSelectCombobox
                                     options={recommendedFields}
                                     selected={field.value}

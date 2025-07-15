@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const sessionToken = request.cookies.get('firebaseIdToken'); // Example cookie name
 
   // Define protected routes
-  const protectedRoutes = ['/dashboard'];
+  const protectedRoutes = ['/dashboard', '/generate'];
 
   if (protectedRoutes.some(path => pathname.startsWith(path))) {
     if (!sessionToken) {
@@ -21,5 +21,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/generate/:path*'],
 };
