@@ -23,7 +23,6 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
-import { LoginDialog } from '@/components/login-dialog';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -351,6 +350,26 @@ export default function GenerateRoadmapPage() {
         }));
         setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
         setStep('roadmap');
+        
+        if (user) {
+            try {
+                const roadmapsRef = collection(db, 'users', user.uid, 'roadmaps');
+                await addDoc(roadmapsRef, {
+                    fieldOfInterest: data.fieldOfInterest[0],
+                    roadmap: result.roadmap,
+                    advice: result.advice,
+                    createdAt: serverTimestamp(),
+                });
+            } catch (error) {
+                 console.error("Error saving roadmap to Firestore:", error);
+                 toast({
+                    title: 'Warning',
+                    description: 'Could not save your roadmap. It will be available in this session but will not be saved to your account.',
+                    variant: 'destructive'
+                 })
+            }
+        }
+
       } catch (error) {
         console.error(error);
          toast({
