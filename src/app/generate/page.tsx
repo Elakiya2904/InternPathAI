@@ -8,7 +8,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import ReactMarkdown from 'react-markdown';
 import { generateSkillsChecklist } from '@/ai/flows/generate-skills-checklist';
 import { generatePersonalizedRoadmap, type GeneratePersonalizedRoadmapOutput } from '@/ai/flows/generate-personalized-roadmap';
-import { generateMindMap, type GenerateMindMapOutput } from '@/ai/flows/generate-mind-map';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -25,7 +24,6 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { LoginDialog } from '@/components/login-dialog';
-import { MindMap } from '@/components/ui/mindmap';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
@@ -101,7 +99,6 @@ type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0]
 
 type StoredRoadmap = {
     roadmapData: { roadmap: RoadmapStepWithCompletion[], advice: string };
-    mindMapData: GenerateMindMapOutput;
     userInput: UserInput;
     roadmapContext: RoadmapContext;
 };
@@ -216,7 +213,6 @@ export default function GenerateRoadmapPage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [additionalSkill, setAdditionalSkill] = useState('');
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
-  const [mindMapData, setMindMapData] = useState<GenerateMindMapOutput | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [roadmapContext, setRoadmapContext] = useState<RoadmapContext | null>(null);
   const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
@@ -248,9 +244,8 @@ export default function GenerateRoadmapPage() {
     const savedRoadmap = localStorage.getItem(key);
     if (savedRoadmap) {
         try {
-            const { roadmapData: loadedData, mindMapData: loadedMindMap, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
+            const { roadmapData: loadedData, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
             setRoadmapData(loadedData);
-            setMindMapData(loadedMindMap);
             setUserInput(loadedInput);
             setRoadmapContext(loadedContext);
             setStep('roadmap');
@@ -266,11 +261,10 @@ export default function GenerateRoadmapPage() {
   }, [user]);
 
   useEffect(() => {
-    if (roadmapData && mindMapData && userInput && roadmapContext) {
+    if (roadmapData && userInput && roadmapContext) {
         const key = user ? `${LOCAL_STORAGE_KEY}-${user.uid}` : LOCAL_STORAGE_KEY;
         const dataToStore: StoredRoadmap = {
             roadmapData,
-            mindMapData,
             userInput,
             roadmapContext,
         };
@@ -285,7 +279,7 @@ export default function GenerateRoadmapPage() {
         };
         localStorage.setItem(key, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
     }
-  }, [roadmapData, mindMapData, userInput, roadmapContext, user]);
+  }, [roadmapData, userInput, roadmapContext, user]);
 
 
   const recommendedFields = [
@@ -356,13 +350,6 @@ export default function GenerateRoadmapPage() {
         }));
         setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
         
-        // Generate mind map data
-        const mindMapResult = await generateMindMap({
-            fieldOfInterest: data.fieldOfInterest[0],
-            skills: result.roadmap.map(step => step.title),
-        });
-        setMindMapData(mindMapResult);
-        
         setStep('roadmap');
       } catch (error) {
         console.error(error);
@@ -400,7 +387,6 @@ export default function GenerateRoadmapPage() {
 
     setStep('input');
     setRoadmapData(null);
-    setMindMapData(null);
     setUserInput(null);
     setRoadmapContext(null);
     setSkillsChecklist([]);
@@ -603,18 +589,6 @@ export default function GenerateRoadmapPage() {
                 </Button>
              </div>
             
-            {mindMapData && (
-              <Card className="shadow-2xl shadow-primary/10 border-2">
-                <CardHeader>
-                  <CardTitle className="font-headline text-3xl flex items-center gap-3"><BrainCircuit className="text-primary" /> Roadmap Visualization</CardTitle>
-                  <CardDescription className="text-lg">Click on a skill to see more details.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MindMap data={mindMapData} roadmapDetails={roadmapData.roadmap} />
-                </CardContent>
-              </Card>
-            )}
-
             <Accordion type="single" collapsible className="w-full space-y-4">
               {roadmapData.roadmap.map((detail, index) => (
                 <RoadmapDetailCard
