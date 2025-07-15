@@ -24,6 +24,8 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { LoginDialog } from '@/components/login-dialog';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
@@ -281,6 +283,29 @@ export default function GenerateRoadmapPage() {
     }
   }, [roadmapData, userInput, roadmapContext, user]);
 
+  const saveRoadmapToFirestore = async (roadmapOutput: GeneratePersonalizedRoadmapOutput, field: string) => {
+    if (!user) return;
+    try {
+      const roadmapsRef = collection(db, 'users', user.uid, 'roadmaps');
+      await addDoc(roadmapsRef, {
+        ...roadmapOutput,
+        fieldOfInterest: field,
+        createdAt: serverTimestamp(),
+      });
+      toast({
+        title: 'Roadmap Saved!',
+        description: 'Your new roadmap has been saved to your dashboard.',
+      });
+    } catch (error) {
+      console.error('Error saving roadmap to Firestore:', error);
+      toast({
+        title: 'Save Failed',
+        description: 'Could not save your roadmap. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   const recommendedFields = [
       { value: 'AI/ML', label: 'AI/ML' },
@@ -349,6 +374,10 @@ export default function GenerateRoadmapPage() {
           certificate: undefined,
         }));
         setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
+        
+        if (user) {
+            await saveRoadmapToFirestore(result, data.fieldOfInterest[0]);
+        }
         
         setStep('roadmap');
       } catch (error) {
