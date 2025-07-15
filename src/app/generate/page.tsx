@@ -96,7 +96,7 @@ const knownTechnologies = [
     { value: 'rust', label: 'Rust' },
 ];
 
-type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; certificate?: { name: string }; };
+type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; };
 
 type StoredRoadmap = {
     roadmapData: { roadmap: RoadmapStepWithCompletion[], advice: string };
@@ -111,24 +111,15 @@ const RoadmapDetailCard = ({
   index,
 }: { 
   detail: RoadmapStepWithCompletion,
-  onComplete: (index: number, file: File) => void,
+  onComplete: (index: number) => void,
   isLocked: boolean,
   index: number
 }) => {
   const Icon = iconMap[detail.icon] || BrainCircuit;
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const { user } = useAuth();
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCertificateFile(e.target.files[0]);
-    }
-  };
   
   const handleComplete = () => {
-    if (certificateFile) {
-        onComplete(index, certificateFile);
-    }
+    onComplete(index);
   };
 
   return (
@@ -182,19 +173,18 @@ const RoadmapDetailCard = ({
             <Separator />
             {!detail.isCompleted && (
                 <div>
-                    <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><Upload /> Complete Step</h4>
+                    <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-primary"><CheckCircle /> Complete Step</h4>
                     <div className="p-4 bg-secondary/50 rounded-md border border-border space-y-4">
-                    <p className="text-muted-foreground">Upload your certificate of completion to mark this step as done.</p>
-                    <Input type="file" onChange={handleFileChange} className="max-w-xs" />
-                    <Button onClick={handleComplete} disabled={!certificateFile}>Mark as Complete</Button>
+                        <p className="text-muted-foreground">Mark this step as completed to unlock the next one.</p>
+                        <Button onClick={handleComplete}>Mark as Complete</Button>
                     </div>
                 </div>
             )}
-            {detail.isCompleted && detail.certificate && (
+            {detail.isCompleted && (
                 <div>
                 <h4 className="font-bold text-xl mb-3 flex items-center gap-2 text-green-500"><CheckCircle /> Step Completed</h4>
                 <div className="p-4 bg-green-500/10 rounded-md border border-green-500/30">
-                    <p className="font-semibold text-green-400">Certificate Uploaded: {detail.certificate.name}</p>
+                    <p className="font-semibold text-green-400">Great job! Keep up the momentum.</p>
                 </div>
                 </div>
             )}
@@ -270,16 +260,7 @@ export default function GenerateRoadmapPage() {
             userInput,
             roadmapContext,
         };
-        const storableRoadmapData = {
-            ...roadmapData,
-            roadmap: roadmapData.roadmap.map(step => {
-                if (step.certificate) {
-                    return {...step, certificate: { name: step.certificate.name }}
-                }
-                return step;
-            })
-        };
-        localStorage.setItem(key, JSON.stringify({ ...dataToStore, roadmapData: storableRoadmapData }));
+        localStorage.setItem(key, JSON.stringify(dataToStore));
     }
   }, [roadmapData, userInput, roadmapContext, user]);
 
@@ -346,7 +327,6 @@ export default function GenerateRoadmapPage() {
         const roadmapWithCompletion = result.roadmap.map(step => ({
           ...step,
           isCompleted: false,
-          certificate: undefined,
         }));
         setRoadmapData({ ...result, roadmap: roadmapWithCompletion });
         setStep('roadmap');
@@ -382,12 +362,10 @@ export default function GenerateRoadmapPage() {
       }
   };
 
-  const handleCompleteStep = (index: number, file: File) => {
+  const handleCompleteStep = (index: number) => {
       if (roadmapData) {
         const newRoadmap = [...roadmapData.roadmap];
         newRoadmap[index].isCompleted = true;
-        // @ts-ignore
-        newRoadmap[index].certificate = file;
         setRoadmapData({ ...roadmapData, roadmap: newRoadmap });
       }
   };
