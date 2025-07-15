@@ -33,13 +33,7 @@ export type GenerateSkillsChecklistOutput = z.infer<
   typeof GenerateSkillsChecklistOutputSchema
 >;
 
-export async function generateSkillsChecklist(
-  input: GenerateSkillsChecklistInput
-): Promise<GenerateSkillsChecklistOutput> {
-  // If no API key is provided, return mock data.
-  if (!process.env.GOOGLE_API_KEY) {
-    console.log("No GOOGLE_API_KEY found, returning mock data for skills checklist.");
-    // Simulate a short delay
+const getMockChecklist = async (input: GenerateSkillsChecklistInput): Promise<GenerateSkillsChecklistOutput> => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     const knownSkills = input.technologiesKnown.split(',').map(s => s.trim()).filter(Boolean);
@@ -54,9 +48,23 @@ export async function generateSkillsChecklist(
     return {
       skillsChecklist: [...new Set([...knownSkills, ...recommendedSkills])]
     };
+}
+
+export async function generateSkillsChecklist(
+  input: GenerateSkillsChecklistInput
+): Promise<GenerateSkillsChecklistOutput> {
+  // If no API key is provided, return mock data.
+  if (!process.env.GOOGLE_API_KEY) {
+    console.log("No GOOGLE_API_KEY found, returning mock data for skills checklist.");
+    return getMockChecklist(input);
   }
   
-  return generateSkillsChecklistFlow(input);
+  try {
+      return await generateSkillsChecklistFlow(input);
+  } catch (error) {
+      console.error("Error generating skills checklist, returning mock data as fallback.", error);
+      return getMockChecklist(input);
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -80,22 +88,7 @@ const generateSkillsChecklistFlow = ai.defineFlow(
     outputSchema: GenerateSkillsChecklistOutputSchema,
   },
   async (input) => {
-    const maxRetries = 3;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const { output } = await prompt(input);
-        return output!;
-      } catch (error: any) {
-        if (error.message.includes('503') && attempt < maxRetries) {
-          console.log(`Attempt ${attempt} failed with 503 error. Retrying in ${attempt}s...`);
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-        } else {
-          console.error(`Flow failed after ${attempt} attempts.`, error);
-          throw error;
-        }
-      }
-    }
-    // This should be unreachable
-    throw new Error('Flow failed after maximum retries.');
+    const { output } = await prompt(input);
+    return output!;
   }
 );
