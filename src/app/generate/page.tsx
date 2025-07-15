@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, CheckCircle, Upload, Lock, RotateCcw } from 'lucide-react';
+import { Loader2, Wand2, ArrowRight, BrainCircuit, Briefcase, PlusCircle, Sparkles, LucideIcon, ListTodo, BookOpen, Lightbulb, Code, Milestone, Database, Server, CheckCircle, Lock, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectCombobox } from '@/components/ui/multi-select-combobox';
@@ -25,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { LoginDialog } from '@/components/login-dialog';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
@@ -206,6 +207,9 @@ export default function GenerateRoadmapPage() {
   const [roadmapData, setRoadmapData] = useState<{ roadmap: RoadmapStepWithCompletion[], advice: string } | null>(null);
   const [userInput, setUserInput] = useState<UserInput | null>(null);
   const [roadmapContext, setRoadmapContext] = useState<RoadmapContext | null>(null);
+  const [isLoginDialogOpen, setLoginDialogOpen] = useState(false);
+  const [pendingRoadmapGeneration, setPendingRoadmapGeneration] = useState<RoadmapContext | null>(null);
+
 
   const { toast } = useToast();
   
@@ -245,12 +249,8 @@ export default function GenerateRoadmapPage() {
   }
 
   useEffect(() => {
-    if (!user) {
-        router.push('/login');
-    } else {
-        getStoredData();
-    }
-  }, [user, router]);
+    getStoredData();
+  }, [user]);
 
   useEffect(() => {
     if (roadmapData && userInput && roadmapContext) {
@@ -315,6 +315,11 @@ export default function GenerateRoadmapPage() {
   };
   
   const handleGenerateRoadmap = async (data: RoadmapContext) => {
+      if (!user) {
+        setPendingRoadmapGeneration(data);
+        setLoginDialogOpen(true);
+        return;
+      }
       if (!userInput) return;
       setLoading(true);
       setRoadmapContext(data);
@@ -362,6 +367,15 @@ export default function GenerateRoadmapPage() {
       }
   };
 
+  const onLoginSuccess = () => {
+    setLoginDialogOpen(false);
+    if(pendingRoadmapGeneration) {
+        handleGenerateRoadmap(pendingRoadmapGeneration);
+        setPendingRoadmapGeneration(null);
+    }
+  }
+
+
   const handleCompleteStep = (index: number) => {
       if (roadmapData) {
         const newRoadmap = [...roadmapData.roadmap];
@@ -386,6 +400,7 @@ export default function GenerateRoadmapPage() {
 
   return (
     <div className="flex-grow flex flex-col items-center p-4 sm:p-8">
+      <LoginDialog open={isLoginDialogOpen} onOpenChange={setLoginDialogOpen} onSuccess={onLoginSuccess} />
       <div className="w-full max-w-4xl xl:max-w-5xl animate-in fade-in-50 duration-500">
         
         {step === 'input' && (

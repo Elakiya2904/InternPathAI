@@ -23,9 +23,6 @@ const loginSchema = z.object({
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-}).refine(data => data.password, {
-  message: "Password is required",
-  path: ['password'],
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
