@@ -17,12 +17,16 @@ import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -46,7 +50,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
 
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: '', password: '', confirmPassword: '' },
   });
 
   const handleLogin = async (data: LoginFormValues) => {
@@ -68,7 +72,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: 'Account Created!', description: "You've been successfully signed up." });
       onSuccess();
-    } catch (error: any) {
+    } catch (error: any)
       toast({ title: 'Signup Failed', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -149,6 +153,19 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={signupForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
