@@ -29,7 +29,7 @@ import { LoginDialog } from '@/components/login-dialog';
 
 const userInputSchema = z.object({
   fieldOfInterest: z.array(z.string()).min(1, 'Field of interest is required').max(1, 'Please select only one field of interest.'),
-  technologiesKnown: z.array(z.string().min(1, "Technology name can't be empty.")),
+  technologiesKnown: z.array(z.string()),
 });
 
 const roadmapContextSchema = z.object({
@@ -57,45 +57,6 @@ const iconMap: { [key: string]: LucideIcon } = {
   Lightbulb,
   CheckCircle,
 };
-
-const knownTechnologies = [
-    { value: 'html', label: 'HTML' },
-    { value: 'css', label: 'CSS' },
-    { value: 'javascript', label: 'JavaScript' },
-    { value: 'typescript', label: 'TypeScript' },
-    { value: 'react', label: 'React' },
-    { value: 'angular', label: 'Angular' },
-    { value: 'vuejs', label: 'Vue.js' },
-    { value: 'nodejs', label: 'Node.js' },
-    { value: 'express', label: 'Express.js' },
-    { value: 'python', label: 'Python' },
-    { value: 'django', label: 'Django' },
-    { value: 'flask', label: 'Flask' },
-    { value: 'java', label: 'Java' },
-    { value: 'spring-boot', label: 'Spring Boot' },
-    { value: 'csharp', label: 'C#' },
-    { value: 'dotnet', label: '.NET' },
-    { value: 'php', label: 'PHP' },
-    { value: 'laravel', label: 'Laravel' },
-    { value: 'sql', label: 'SQL' },
-    { value: 'mysql', label: 'MySQL' },
-    { value: 'postgresql', label: 'PostgreSQL' },
-    { value: 'mongodb', label: 'MongoDB' },
-    { value: 'git', label: 'Git' },
-    { value: 'docker', label: 'Docker' },
-    { value: 'kubernetes', label: 'Kubernetes' },
-    { value: 'aws', label: 'AWS' },
-    { value: 'gcp', label: 'Google Cloud (GCP)' },
-    { value: 'azure', label: 'Microsoft Azure' },
-    { value: 'tensorflow', label: 'TensorFlow' },
-    { value: 'pytorch', label: 'PyTorch' },
-    { value: 'scikit-learn', label: 'Scikit-learn' },
-    { value: 'nextjs', label: 'Next.js' },
-    { value: 'graphql', label: 'GraphQL' },
-    { value: 'swift', label: 'Swift' },
-    { value: 'kotlin', label: 'Kotlin' },
-    { value: 'rust', label: 'Rust' },
-];
 
 type RoadmapStepWithCompletion = GeneratePersonalizedRoadmapOutput['roadmap'][0] & { isCompleted: boolean; };
 
@@ -127,7 +88,7 @@ const RoadmapDetailCard = ({
     <AccordionItem value={detail.title} className="border-2 rounded-lg shadow-2xl shadow-primary/10 mb-4 bg-card" disabled={isLocked && !!user}>
       <AccordionTrigger className="p-6 text-left hover:no-underline" disabled={isLocked && !!user}>
         <div className="w-full">
-            <CardTitle className="text-2xl flex items-center gap-3">
+            <CardTitle as="h3" className="text-2xl flex items-center gap-3">
               {(isLocked && !!user) ? <Lock className="w-8 h-8 text-muted-foreground" /> : <Icon className="w-8 h-8 text-primary" />}
               {detail.title}
               {detail.isCompleted && <CheckCircle className="w-7 h-7 text-green-500" />}
@@ -625,4 +586,5 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
+
 
