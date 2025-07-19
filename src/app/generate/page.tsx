@@ -233,6 +233,21 @@ export default function GenerateRoadmapPage() {
       { value: 'Data Science', label: 'Data Science' },
       { value: 'UI/UX Design', label: 'UI/UX Design' },
   ];
+  
+  const knownTechnologies = [
+    { value: 'HTML', label: 'HTML' },
+    { value: 'CSS', label: 'CSS' },
+    { value: 'JavaScript', label: 'JavaScript' },
+    { value: 'TypeScript', label: 'TypeScript' },
+    { value: 'React', label: 'React' },
+    { value: 'Next.js', label: 'Next.js' },
+    { value: 'Tailwind CSS', label: 'Tailwind CSS' },
+    { value: 'Node.js', label: 'Node.js' },
+    { value: 'Python', label: 'Python' },
+    { value: 'SQL', label: 'SQL' },
+    { value: 'NoSQL', label: 'NoSQL' },
+    { value: 'Git', label: 'Git' },
+  ];
 
   const handleGenerateChecklist = async (data: UserInput) => {
     setLoading(true);
@@ -586,5 +601,3 @@ export default function GenerateRoadmapPage() {
     </div>
   );
 }
-
-
