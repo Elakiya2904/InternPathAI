@@ -50,7 +50,7 @@ export default function HomePage() {
                 Stop guessing. Start learning. InternPathAI creates a personalized, step-by-step learning plan to land your dream internship.
             </p>
             <div className="flex justify-center gap-4">
-                <Link href="/signup">
+                <Link href="/generate">
                     <Button size="lg" className="text-lg py-7 px-8">
                         Get Your Free Roadmap <ArrowRight className="ml-2" />
                     </Button>
