@@ -72,7 +72,7 @@ export function LoginDialog({ open, onOpenChange, onSuccess }: LoginDialogProps)
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: 'Account Created!', description: "You've been successfully signed up." });
       onSuccess();
-    } catch (error: any)
+    } catch (error: any) {
       toast({ title: 'Signup Failed', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
