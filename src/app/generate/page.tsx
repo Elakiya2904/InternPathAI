@@ -198,10 +198,14 @@ export default function GenerateRoadmapPage() {
     if (savedRoadmap) {
         try {
             const { roadmapData: loadedData, userInput: loadedInput, roadmapContext: loadedContext }: StoredRoadmap = JSON.parse(savedRoadmap);
-            setRoadmapData(loadedData);
-            setUserInput(loadedInput);
-            setRoadmapContext(loadedContext);
-            setStep('roadmap');
+            if(loadedData && loadedInput && loadedContext) {
+                setRoadmapData(loadedData);
+                setUserInput(loadedInput);
+                setRoadmapContext(loadedContext);
+                form.reset(loadedInput);
+                contextForm.reset(loadedContext);
+                setStep('roadmap');
+            }
         } catch (error) {
             console.error("Failed to parse saved roadmap from localStorage", error);
             localStorage.removeItem(key);
@@ -370,8 +374,13 @@ export default function GenerateRoadmapPage() {
     setRoadmapContext(null);
     setSkillsChecklist([]);
     setSelectedSkills([]);
-    form.reset();
-    contextForm.reset();
+    form.reset({
+      fieldOfInterest: [],
+      technologiesKnown: [],
+    });
+    contextForm.reset({
+        fieldOfInterest: [],
+    });
   };
 
   return (

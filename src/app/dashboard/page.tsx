@@ -46,38 +46,65 @@ const iconMap: { [key: string]: LucideIcon } = {
 
 
 const SavedRoadmapCard = ({ savedRoadmap }: { savedRoadmap: SavedRoadmap }) => {
+    const router = useRouter();
+    const { user } = useAuth();
+
+    const handleCardClick = () => {
+        if (!user) return;
+        
+        const key = `internpath-roadmap-${user.uid}`;
+        const dataToStore = {
+            roadmapData: {
+                roadmap: savedRoadmap.roadmap.map(step => ({ ...step, isCompleted: false })), // Reset completion state for viewing
+                advice: savedRoadmap.advice,
+            },
+            userInput: {
+                fieldOfInterest: [savedRoadmap.fieldOfInterest],
+                technologiesKnown: [], // This info isn't saved, so default to empty
+            },
+            roadmapContext: {
+                fieldOfInterest: [savedRoadmap.fieldOfInterest],
+            },
+        };
+        
+        localStorage.setItem(key, JSON.stringify(dataToStore));
+        router.push('/generate');
+    };
+    
     const Icon = iconMap[savedRoadmap.roadmap[0]?.icon] || BrainCircuit;
     return (
-        <Card className="shadow-lg border-2 border-border transition-all hover:border-primary">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                    <Icon className="w-8 h-8 text-primary" />
-                    {savedRoadmap.fieldOfInterest}
-                </CardTitle>
-                <CardDescription>
-                    Saved on: {savedRoadmap.createdAt.toLocaleDateString()}
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Accordion type="single" collapsible>
-                    <AccordionItem value="details">
-                        <AccordionTrigger>View Details</AccordionTrigger>
-                        <AccordionContent className="space-y-4">
-                            <h3 className="font-bold text-lg mt-4">Personalized Advice</h3>
-                            <p className="text-muted-foreground">{savedRoadmap.advice}</p>
-                            <h3 className="font-bold text-lg mt-4">Roadmap Steps</h3>
-                            <ul className="space-y-2">
-                                {savedRoadmap.roadmap.map((step, index) => (
-                                    <li key={index} className="p-2 bg-secondary/50 rounded-md">
-                                        {step.title}
-                                    </li>
-                                ))}
-                            </ul>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-            </CardContent>
-        </Card>
+        <div onClick={handleCardClick} className="cursor-pointer">
+            <Card className="shadow-lg border-2 border-border transition-all hover:border-primary h-full">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                        <Icon className="w-8 h-8 text-primary" />
+                        {savedRoadmap.fieldOfInterest}
+                    </CardTitle>
+                    <CardDescription>
+                        Saved on: {savedRoadmap.createdAt.toLocaleDateString()}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Accordion type="single" collapsible onClick={(e) => e.stopPropagation()}>
+                        <AccordionItem value="details">
+                            <AccordionTrigger>View Details</AccordionTrigger>
+                            <AccordionContent className="space-y-4">
+                                <h3 className="font-bold text-lg mt-4">Personalized Advice</h3>
+                                <p className="text-muted-foreground">{savedRoadmap.advice}</p>
+                                <h3 className="font-bold text-lg mt-4">Roadmap Steps</h3>
+                                <ul className="space-y-2">
+                                    {savedRoadmap.roadmap.map((step, index) => (
+                                        <li key={index} className="p-2 bg-secondary/50 rounded-md">
+                                            {step.title}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 
