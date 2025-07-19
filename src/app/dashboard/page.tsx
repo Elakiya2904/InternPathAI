@@ -4,11 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, PlusCircle, BrainCircuit, ListTodo, BookOpen, Lightbulb, type LucideIcon } from 'lucide-react';
+import { Loader2, PlusCircle, BrainCircuit, ListTodo, BookOpen, Lightbulb, type LucideIcon, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -16,6 +16,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+
 
 // A type for the roadmap data structure after it's been stored in Firestore
 type SavedRoadmap = {
@@ -48,6 +61,7 @@ const iconMap: { [key: string]: LucideIcon } = {
 const SavedRoadmapCard = ({ savedRoadmap }: { savedRoadmap: SavedRoadmap }) => {
     const router = useRouter();
     const { user } = useAuth();
+    const { toast } = useToast();
 
     const handleCardClick = () => {
         if (!user) return;
@@ -71,10 +85,31 @@ const SavedRoadmapCard = ({ savedRoadmap }: { savedRoadmap: SavedRoadmap }) => {
         router.push('/generate');
     };
     
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user) return;
+
+        try {
+            const roadmapRef = doc(db, 'users', user.uid, 'roadmaps', savedRoadmap.id);
+            await deleteDoc(roadmapRef);
+            toast({
+                title: "Success",
+                description: "Roadmap deleted successfully.",
+            })
+        } catch (error) {
+            console.error("Error deleting roadmap:", error);
+            toast({
+                title: "Error",
+                description: "Failed to delete roadmap. Please try again.",
+                variant: "destructive"
+            })
+        }
+    };
+    
     const Icon = iconMap[savedRoadmap.roadmap[0]?.icon] || BrainCircuit;
     return (
-        <div onClick={handleCardClick} className="cursor-pointer">
-            <Card className="shadow-lg border-2 border-border transition-all hover:border-primary h-full">
+        <Card className="shadow-lg border-2 border-border transition-all hover:border-primary h-full flex flex-col">
+            <div onClick={handleCardClick} className="cursor-pointer flex-grow">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-2xl">
                         <Icon className="w-8 h-8 text-primary" />
@@ -103,8 +138,30 @@ const SavedRoadmapCard = ({ savedRoadmap }: { savedRoadmap: SavedRoadmap }) => {
                         </AccordionItem>
                     </Accordion>
                 </CardContent>
-            </Card>
-        </div>
+            </div>
+            <div className="p-4 pt-0 mt-auto">
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" className="w-full" onClick={(e) => e.stopPropagation()}>
+                            <Trash2 className="mr-2" /> Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your
+                                "{savedRoadmap.fieldOfInterest}" roadmap.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </Card>
     );
 };
 
